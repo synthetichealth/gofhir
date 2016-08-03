@@ -1,0 +1,5 @@
+# Binary artifacts
+/gofhir
+
+# Folders
+.vscode
