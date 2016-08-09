@@ -84,31 +84,26 @@ func (da *TestSyntheticCountyStatsDataAccess) GetPopulationPerSquareMile(countyF
 }
 
 func (da *TestSyntheticCountyStatsDataAccess) AddMale(countyFp string) {
-	da.malePop += 1
-	da.pop += 1
-	da.updatePopPerSqMile()
+	da.modifyPopulationCount(countyFp, 1, 0)
 }
 
 func (da *TestSyntheticCountyStatsDataAccess) AddFemale(countyFp string) {
-	da.femalePop += 1
-	da.pop += 1
-	da.updatePopPerSqMile()
+	da.modifyPopulationCount(countyFp, 0, 1)
 }
 
 func (da *TestSyntheticCountyStatsDataAccess) RemoveMale(countyFp string) {
-	da.malePop -= 1
-	da.pop -= 1
-	da.updatePopPerSqMile()
+	da.modifyPopulationCount(countyFp, -1, 0)
 }
 
 func (da *TestSyntheticCountyStatsDataAccess) RemoveFemale(countyFp string) {
-	da.femalePop -= 1
-	da.pop -= 1
-	da.updatePopPerSqMile()
+	da.modifyPopulationCount(countyFp, 0, -1)
 }
 
-func (da *TestSyntheticCountyStatsDataAccess) updatePopPerSqMile() {
-	da.popPerSqMile = float64(da.pop) / da.sqMiles
+func (da *TestSyntheticCountyStatsDataAccess) modifyPopulationCount(countyFp string, maleDelta, femaleDelta int64) {
+    da.pop += (maleDelta + femaleDelta)
+    da.malePop += maleDelta
+    da.femalePop += femaleDelta
+    da.popPerSqMile = float64(da.pop) / da.sqMiles
 }
 
 // TestSyntheticCountySubdivisionStatsDataAccess implements the SyntheticCountySubdivisonStatsDataAccess
@@ -135,31 +130,26 @@ func (da *TestSyntheticCountySubdivisionStatsDataAccess) GetPopulationPerSquareM
 }
 
 func (da *TestSyntheticCountySubdivisionStatsDataAccess) AddMale(countyFp string, cousubFp string) {
-	da.malePop += 1
-	da.pop += 1
-	da.updatePopPerSqMile()
+	da.modifyPopulationCount(countyFp, cousubFp, 1, 0)
 }
 
 func (da *TestSyntheticCountySubdivisionStatsDataAccess) AddFemale(countyFp string, cousubFp string) {
-	da.femalePop += 1
-	da.pop += 1
-	da.updatePopPerSqMile()
+	da.modifyPopulationCount(countyFp, cousubFp, 0, 1)
 }
 
 func (da *TestSyntheticCountySubdivisionStatsDataAccess) RemoveMale(countyFp string, cousubFp string) {
-	da.malePop -= 1
-	da.pop -= 1
-	da.updatePopPerSqMile()
+	da.modifyPopulationCount(countyFp, cousubFp, -1, 0)
 }
 
 func (da *TestSyntheticCountySubdivisionStatsDataAccess) RemoveFemale(countyFp string, cousubFp string) {
-	da.femalePop -= 1
-	da.pop -= 1
-	da.updatePopPerSqMile()
+	da.modifyPopulationCount(countyFp, cousubFp, 0, -1)
 }
 
-func (da *TestSyntheticCountySubdivisionStatsDataAccess) updatePopPerSqMile() {
-	da.popPerSqMile = float64(da.pop) / da.sqMiles
+func (da *TestSyntheticCountySubdivisionStatsDataAccess) modifyPopulationCount(countyFp, cousubFp string, maleDelta, femaleDelta int64) {
+    da.pop += (maleDelta + femaleDelta)
+    da.malePop += maleDelta
+    da.femalePop += femaleDelta
+    da.popPerSqMile = float64(da.pop) / da.sqMiles
 }
 
 // Test harness for PtStatsInterceptor
