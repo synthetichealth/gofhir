@@ -22,7 +22,7 @@ func main() {
 		log.Fatal("You must supply a pgurl flag value")
 	}
 
-	// setup the pg driver connection
+	// configure the GORM Postgres driver and database connection
 	db, err := gorm.Open("postgres", *pgURL)
 	db.SingularTable(true)  // disable table name pluralization globally
 
