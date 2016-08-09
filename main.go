@@ -36,9 +36,9 @@ func main() {
 	}
 	// configure the stat interceptor
 	ptStatsInterceptor := &ptstats.PtStatsInterceptor{
-		CousubDA: ptstats.PgCountySubdivisionDataAccess{DB: db},        
-		SynthCountyStatsDA: ptstats.PgSyntheticCountyStatsDataAccess{DB: db},
-		SynthCousubStatsDA: ptstats.PgSyntheticCountySubdivisionStatsDataAccess{DB: db},
+		CousubDA: &ptstats.PgCountySubdivisionDataAccess{DB: db},        
+		SynthCountyStatsDA: &ptstats.PgSyntheticCountyStatsDataAccess{DB: db},
+		SynthCousubStatsDA: &ptstats.PgSyntheticCountySubdivisionStatsDataAccess{DB: db},
 	}
 
 	// setup and run the server
