@@ -19,7 +19,7 @@ import (
 // interface without a database connection for testing purposes only.
 type TestCountySubdivisionDataAccess struct{}
 
-func (da TestCountySubdivisionDataAccess) GetCountySubdivisionFp(city string) string {
+func (da *TestCountySubdivisionDataAccess) GetCountySubdivisionFp(city string) string {
 
 	if city == "" {
 		return ""
@@ -35,7 +35,7 @@ func (da TestCountySubdivisionDataAccess) GetCountySubdivisionFp(city string) st
 	}
 }
 
-func (da TestCountySubdivisionDataAccess) GetCountyFp(cousubFp string) string {
+func (da *TestCountySubdivisionDataAccess) GetCountyFp(cousubFp string) string {
 
 	if cousubFp == "" {
 		return ""
@@ -51,7 +51,7 @@ func (da TestCountySubdivisionDataAccess) GetCountyFp(cousubFp string) string {
 	}
 }
 
-func (da TestCountySubdivisionDataAccess) GetStateFp(countyFp string) string {
+func (da *TestCountySubdivisionDataAccess) GetStateFp(countyFp string) string {
 
 	if countyFp == "" {
 		return ""
