@@ -94,19 +94,19 @@ type PgCountySubdivisionDataAccess struct {
 	DB *gorm.DB
 }
 
-func (da PgCountySubdivisionDataAccess) GetCountySubdivisionFp(city string) string {
+func (da *PgCountySubdivisionDataAccess) GetCountySubdivisionFp(city string) string {
 	var cousub CountySubdivision
 	da.DB.Where(&CountySubdivision{Name: city}).First(&cousub)
 	return cousub.CousubFp
 }
 
-func (da PgCountySubdivisionDataAccess) GetCountyFp(cousubFp string) string {
+func (da *PgCountySubdivisionDataAccess) GetCountyFp(cousubFp string) string {
 	var cousub CountySubdivision
 	da.DB.Where(&CountySubdivision{CousubFp: cousubFp}).First(&cousub)
 	return cousub.CountyFp
 }
 
-func (da PgCountySubdivisionDataAccess) GetStateFp(countyFp string) string {
+func (da *PgCountySubdivisionDataAccess) GetStateFp(countyFp string) string {
 	var cousub CountySubdivision
 	da.DB.Where(&CountySubdivision{CountyFp: countyFp}).First(&cousub)
 	return cousub.StateFp
@@ -132,77 +132,56 @@ type PgSyntheticCountyStatsDataAccess struct {
 	DB *gorm.DB
 }
 
-func (da PgSyntheticCountyStatsDataAccess) GetPopulation(countyFp string) int64 {
+func (da *PgSyntheticCountyStatsDataAccess) GetPopulation(countyFp string) int64 {
 	var county SyntheticCountyStatistics
 	da.DB.Where(&SyntheticCountyStatistics{CountyFp: countyFp}).First(&county)
 	return county.Population
 }
 
-func (da PgSyntheticCountyStatsDataAccess) GetMalePopulation(countyFp string) int64 {
+func (da *PgSyntheticCountyStatsDataAccess) GetMalePopulation(countyFp string) int64 {
 	var county SyntheticCountyStatistics
 	da.DB.Where(&SyntheticCountyStatistics{CountyFp: countyFp}).First(&county)
 	return county.PopulationMale
 }
 
-func (da PgSyntheticCountyStatsDataAccess) GetFemalePopulation(countyFp string) int64 {
+func (da *PgSyntheticCountyStatsDataAccess) GetFemalePopulation(countyFp string) int64 {
 	var county SyntheticCountyStatistics
 	da.DB.Where(&SyntheticCountyStatistics{CountyFp: countyFp}).First(&county)
 	return county.PopulationFemale
 }
 
-func (da PgSyntheticCountyStatsDataAccess) GetPopulationPerSquareMile(countyFp string) float64 {
+func (da *PgSyntheticCountyStatsDataAccess) GetPopulationPerSquareMile(countyFp string) float64 {
 	var county SyntheticCountyStatistics
 	da.DB.Where(&SyntheticCountyStatistics{CountyFp: countyFp}).First(&county)
 	return county.PopulationPerSquareMile
 }
 
-func (da PgSyntheticCountyStatsDataAccess) AddMale(countyFp string) {
-	var county SyntheticCountyStatistics
-	da.DB.Where(&SyntheticCountyStatistics{CountyFp: countyFp}).First(&county)
-	county.Population += 1
-	county.PopulationMale += 1
-	county.PopulationPerSquareMile = float64(county.Population) / county.SquareMiles
-	da.DB.Model(&county).Update(SyntheticCountyStatistics{
-		Population:              county.Population,
-		PopulationMale:          county.PopulationMale,
-		PopulationPerSquareMile: county.PopulationPerSquareMile,
-	})
+func (da *PgSyntheticCountyStatsDataAccess) AddMale(countyFp string) {
+	da.modifyPopulationCount(countyFp, 1, 0)
 }
 
-func (da PgSyntheticCountyStatsDataAccess) AddFemale(countyFp string) {
-	var county SyntheticCountyStatistics
-	da.DB.Where(&SyntheticCountyStatistics{CountyFp: countyFp}).First(&county)
-	county.Population += 1
-	county.PopulationFemale += 1
-	county.PopulationPerSquareMile = float64(county.Population) / county.SquareMiles
-	da.DB.Model(&county).Update(SyntheticCountyStatistics{
-		Population:              county.Population,
-		PopulationFemale:        county.PopulationFemale,
-		PopulationPerSquareMile: county.PopulationPerSquareMile,
-	})
+func (da *PgSyntheticCountyStatsDataAccess) AddFemale(countyFp string) {
+	da.modifyPopulationCount(countyFp, 0, 1)
 }
 
-func (da PgSyntheticCountyStatsDataAccess) RemoveMale(countyFp string) {
-	var county SyntheticCountyStatistics
-	da.DB.Where(&SyntheticCountyStatistics{CountyFp: countyFp}).First(&county)
-	county.Population -= 1
-	county.PopulationMale -= 1
-	county.PopulationPerSquareMile = float64(county.Population) / county.SquareMiles
-	da.DB.Model(&county).Update(SyntheticCountyStatistics{
-		Population:              county.Population,
-		PopulationMale:          county.PopulationMale,
-		PopulationPerSquareMile: county.PopulationPerSquareMile,
-	})
+func (da *PgSyntheticCountyStatsDataAccess) RemoveMale(countyFp string) {
+	da.modifyPopulationCount(countyFp, -1, 0)
 }
 
-func (da PgSyntheticCountyStatsDataAccess) RemoveFemale(countyFp string) {
+func (da *PgSyntheticCountyStatsDataAccess) RemoveFemale(countyFp string) {
+	da.modifyPopulationCount(countyFp, 0, -1)
+}
+
+func (da *PgSyntheticCountyStatsDataAccess) modifyPopulationCount(countyFp string, maleDelta, femaleDelta int64) {
 	var county SyntheticCountyStatistics
 	da.DB.Where(&SyntheticCountyStatistics{CountyFp: countyFp}).First(&county)
-	county.Population -= 1
-	county.PopulationFemale -= 1
+	county.Population += (maleDelta + femaleDelta)
+	county.PopulationMale += maleDelta
+	county.PopulationFemale += femaleDelta
 	county.PopulationPerSquareMile = float64(county.Population) / county.SquareMiles
 	da.DB.Model(&county).Update(SyntheticCountyStatistics{
 		Population:              county.Population,
+		PopulationMale: 		 county.PopulationMale,
 		PopulationFemale:        county.PopulationFemale,
 		PopulationPerSquareMile: county.PopulationPerSquareMile,
 	})
@@ -229,77 +208,56 @@ type PgSyntheticCountySubdivisionStatsDataAccess struct {
 	DB *gorm.DB
 }
 
-func (da PgSyntheticCountySubdivisionStatsDataAccess) GetPopulation(countyFp string, cousubFp string) int64 {
+func (da *PgSyntheticCountySubdivisionStatsDataAccess) GetPopulation(countyFp string, cousubFp string) int64 {
 	var cousub SyntheticCountySubdivisionStatistics
 	da.DB.Where(&SyntheticCountySubdivisionStatistics{CountyFp: countyFp, CousubFp: cousubFp}).First(&cousub)
 	return cousub.Population
 }
 
-func (da PgSyntheticCountySubdivisionStatsDataAccess) GetMalePopulation(countyFp string, cousubFp string) int64 {
+func (da *PgSyntheticCountySubdivisionStatsDataAccess) GetMalePopulation(countyFp string, cousubFp string) int64 {
 	var cousub SyntheticCountySubdivisionStatistics
 	da.DB.Where(&SyntheticCountySubdivisionStatistics{CountyFp: countyFp, CousubFp: cousubFp}).First(&cousub)
 	return cousub.PopulationMale
 }
 
-func (da PgSyntheticCountySubdivisionStatsDataAccess) GetFemalePopulation(countyFp string, cousubFp string) int64 {
+func (da *PgSyntheticCountySubdivisionStatsDataAccess) GetFemalePopulation(countyFp string, cousubFp string) int64 {
 	var cousub SyntheticCountySubdivisionStatistics
 	da.DB.Where(&SyntheticCountySubdivisionStatistics{CountyFp: countyFp, CousubFp: cousubFp}).First(&cousub)
 	return cousub.PopulationFemale
 }
 
-func (da PgSyntheticCountySubdivisionStatsDataAccess) GetPopulationPerSquareMile(countyFp string, cousubFp string) float64 {
+func (da *PgSyntheticCountySubdivisionStatsDataAccess) GetPopulationPerSquareMile(countyFp string, cousubFp string) float64 {
 	var cousub SyntheticCountySubdivisionStatistics
 	da.DB.Where(&SyntheticCountySubdivisionStatistics{CountyFp: countyFp, CousubFp: cousubFp}).First(&cousub)
 	return cousub.PopulationPerSquareMile
 }
 
-func (da PgSyntheticCountySubdivisionStatsDataAccess) AddMale(countyFp string, cousubFp string) {
-	var cousub SyntheticCountySubdivisionStatistics
-	da.DB.Where(&SyntheticCountySubdivisionStatistics{CountyFp: countyFp, CousubFp: cousubFp}).First(&cousub)
-	cousub.Population += 1
-	cousub.PopulationMale += 1
-	cousub.PopulationPerSquareMile = float64(cousub.Population) / cousub.SquareMiles
-	da.DB.Model(&cousub).Update(SyntheticCountySubdivisionStatistics{
-		Population:              cousub.Population,
-		PopulationMale:          cousub.PopulationMale,
-		PopulationPerSquareMile: cousub.PopulationPerSquareMile,
-	})
+func (da *PgSyntheticCountySubdivisionStatsDataAccess) AddMale(countyFp string, cousubFp string) {
+	da.modifyPopulationCount(countyFp, cousubFp, 1, 0)
 }
 
-func (da PgSyntheticCountySubdivisionStatsDataAccess) AddFemale(countyFp string, cousubFp string) {
-	var cousub SyntheticCountySubdivisionStatistics
-	da.DB.Where(&SyntheticCountySubdivisionStatistics{CountyFp: countyFp, CousubFp: cousubFp}).First(&cousub)
-	cousub.Population += 1
-	cousub.PopulationFemale += 1
-	cousub.PopulationPerSquareMile = float64(cousub.Population) / cousub.SquareMiles
-	da.DB.Model(&cousub).Update(SyntheticCountySubdivisionStatistics{
-		Population:              cousub.Population,
-		PopulationFemale:        cousub.PopulationFemale,
-		PopulationPerSquareMile: cousub.PopulationPerSquareMile,
-	})
+func (da *PgSyntheticCountySubdivisionStatsDataAccess) AddFemale(countyFp string, cousubFp string) {
+	da.modifyPopulationCount(countyFp, cousubFp, 0, 1)
 }
 
-func (da PgSyntheticCountySubdivisionStatsDataAccess) RemoveMale(countyFp string, cousubFp string) {
-	var cousub SyntheticCountySubdivisionStatistics
-	da.DB.Where(&SyntheticCountySubdivisionStatistics{CountyFp: countyFp, CousubFp: cousubFp}).First(&cousub)
-	cousub.Population -= 1
-	cousub.PopulationMale -= 1
-	cousub.PopulationPerSquareMile = float64(cousub.Population) / cousub.SquareMiles
-	da.DB.Model(&cousub).Update(SyntheticCountySubdivisionStatistics{
-		Population:              cousub.Population,
-		PopulationMale:          cousub.PopulationMale,
-		PopulationPerSquareMile: cousub.PopulationPerSquareMile,
-	})
+func (da *PgSyntheticCountySubdivisionStatsDataAccess) RemoveMale(countyFp string, cousubFp string) {
+	da.modifyPopulationCount(countyFp, cousubFp, -1, 0)
 }
 
-func (da PgSyntheticCountySubdivisionStatsDataAccess) RemoveFemale(countyFp string, cousubFp string) {
+func (da *PgSyntheticCountySubdivisionStatsDataAccess) RemoveFemale(countyFp string, cousubFp string) {
+	da.modifyPopulationCount(countyFp, cousubFp, 0, -1)
+}
+
+func (da *PgSyntheticCountySubdivisionStatsDataAccess) modifyPopulationCount(countyFp, cousubFp string, maleDelta, femaleDelta int64) {
 	var cousub SyntheticCountySubdivisionStatistics
 	da.DB.Where(&SyntheticCountySubdivisionStatistics{CountyFp: countyFp, CousubFp: cousubFp}).First(&cousub)
-	cousub.Population -= 1
-	cousub.PopulationFemale -= 1
+	cousub.Population += (maleDelta + femaleDelta)
+	cousub.PopulationMale += maleDelta
+	cousub.PopulationFemale += femaleDelta
 	cousub.PopulationPerSquareMile = float64(cousub.Population) / cousub.SquareMiles
 	da.DB.Model(&cousub).Update(SyntheticCountySubdivisionStatistics{
 		Population:              cousub.Population,
+		PopulationMale:			 cousub.PopulationMale,
 		PopulationFemale:        cousub.PopulationFemale,
 		PopulationPerSquareMile: cousub.PopulationPerSquareMile,
 	})
