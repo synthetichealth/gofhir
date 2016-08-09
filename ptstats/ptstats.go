@@ -179,11 +179,13 @@ func (da *PgSyntheticCountyStatsDataAccess) modifyPopulationCount(countyFp strin
 	county.PopulationMale += maleDelta
 	county.PopulationFemale += femaleDelta
 	county.PopulationPerSquareMile = float64(county.Population) / county.SquareMiles
-	da.DB.Model(&county).Update(SyntheticCountyStatistics{
-		Population:              county.Population,
-		PopulationMale: 		 county.PopulationMale,
-		PopulationFemale:        county.PopulationFemale,
-		PopulationPerSquareMile: county.PopulationPerSquareMile,
+
+	// See http://jinzhu.me/gorm/curd.html#update-changed-fields for potential issues with Struct-based updates
+	da.DB.Model(&county).Update(map[string]interface{}{
+		"pop":        county.Population,
+		"pop_male":   county.PopulationMale,
+		"pop_female": county.PopulationFemale,
+		"pop_sm":     county.PopulationPerSquareMile,
 	})
 }
 
@@ -255,11 +257,13 @@ func (da *PgSyntheticCountySubdivisionStatsDataAccess) modifyPopulationCount(cou
 	cousub.PopulationMale += maleDelta
 	cousub.PopulationFemale += femaleDelta
 	cousub.PopulationPerSquareMile = float64(cousub.Population) / cousub.SquareMiles
-	da.DB.Model(&cousub).Update(SyntheticCountySubdivisionStatistics{
-		Population:              cousub.Population,
-		PopulationMale:			 cousub.PopulationMale,
-		PopulationFemale:        cousub.PopulationFemale,
-		PopulationPerSquareMile: cousub.PopulationPerSquareMile,
+
+	// See http://jinzhu.me/gorm/curd.html#update-changed-fields for potential issues with Struct-based updates
+	da.DB.Model(&cousub).Update(map[string]interface{}{
+		"pop":        cousub.Population,
+		"pop_male":   cousub.PopulationMale,
+		"pop_female": cousub.PopulationFemale,
+		"pop_sm":     cousub.PopulationPerSquareMile,
 	})
 }
 
