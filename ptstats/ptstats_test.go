@@ -100,10 +100,10 @@ func (da *TestSyntheticCountyStatsDataAccess) RemoveFemale(countyFp string) {
 }
 
 func (da *TestSyntheticCountyStatsDataAccess) modifyPopulationCount(countyFp string, maleDelta, femaleDelta int64) {
-    da.pop += (maleDelta + femaleDelta)
-    da.malePop += maleDelta
-    da.femalePop += femaleDelta
-    da.popPerSqMile = float64(da.pop) / da.sqMiles
+	da.pop += (maleDelta + femaleDelta)
+	da.malePop += maleDelta
+	da.femalePop += femaleDelta
+	da.popPerSqMile = float64(da.pop) / da.sqMiles
 }
 
 // TestSyntheticCountySubdivisionStatsDataAccess implements the SyntheticCountySubdivisonStatsDataAccess
@@ -146,10 +146,10 @@ func (da *TestSyntheticCountySubdivisionStatsDataAccess) RemoveFemale(countyFp s
 }
 
 func (da *TestSyntheticCountySubdivisionStatsDataAccess) modifyPopulationCount(countyFp, cousubFp string, maleDelta, femaleDelta int64) {
-    da.pop += (maleDelta + femaleDelta)
-    da.malePop += maleDelta
-    da.femalePop += femaleDelta
-    da.popPerSqMile = float64(da.pop) / da.sqMiles
+	da.pop += (maleDelta + femaleDelta)
+	da.malePop += maleDelta
+	da.femalePop += femaleDelta
+	da.popPerSqMile = float64(da.pop) / da.sqMiles
 }
 
 // Test harness for PtStatsInterceptor
