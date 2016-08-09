@@ -312,11 +312,13 @@ type PtStatsInterceptor struct {
 	SynthCousubStatsDA SyntheticCountySubdivisionStatsDataAccess
 }
 
-func UpdatePatientStats(s *PtStatsInterceptor, c *gin.Context) {
+func (s *PtStatsInterceptor) UpdatePatientStats(c *gin.Context) {
 
 	// Read the body and close the stream
 	body, _ := ioutil.ReadAll(c.Request.Body)
 	c.Request.Body.Close()
+	// We need to replenish the body since we drained the stream
+	c.Request.Body = ioutil.NopCloser(bytes.NewReader(body))
 
 	// Parse the patient from the request body
 	var patient Patient
@@ -326,9 +328,6 @@ func UpdatePatientStats(s *PtStatsInterceptor, c *gin.Context) {
 		log.Printf("ptstats: %s", err.Error())
 		return
 	}
-
-	// We need to replenish the body since we drained the stream
-	c.Request.Body = ioutil.NopCloser(bytes.NewReader(body))
 
 	city := patient.Address[0].City
 	gender := patient.Gender
@@ -360,6 +359,9 @@ func UpdatePatientStats(s *PtStatsInterceptor, c *gin.Context) {
 		case "female":
 			s.SynthCousubStatsDA.AddFemale(countyFp, cousubFp)
 			s.SynthCountyStatsDA.AddFemale(countyFp)
+		default:
+			log.Printf("ptstats: invalid patient gender")
+			return
 		}
 
 	case "DELETE":
@@ -370,7 +372,13 @@ func UpdatePatientStats(s *PtStatsInterceptor, c *gin.Context) {
 		case "female":
 			s.SynthCousubStatsDA.RemoveFemale(countyFp, cousubFp)
 			s.SynthCountyStatsDA.RemoveFemale(countyFp)
+		default:
+			log.Printf("ptstats: invalid patient gender")
+			return
 		}
+	default:
+		log.Printf("ptstats: unsupported HTTP method %s", c.Request.Method)
+		return
 	}
 }
 
@@ -382,7 +390,7 @@ func (s *PtStatsInterceptor) Handler(c *gin.Context) {
 		c.Request.URL.Path == "/Patient" &&
 		(c.Request.Method == "POST" || c.Request.Method == "DELETE") {
 
-		UpdatePatientStats(s, c)
+		s.UpdatePatientStats(c)
 	}
 
 	// Go to the next handler
