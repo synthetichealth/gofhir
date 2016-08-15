@@ -4,7 +4,7 @@ import (
 	"flag"
 	"log"
 
-	"gitlab.mitre.org/synthea/gofhir/ptstats"
+	"github.com/synthetichealth/gofhir/ptstats"
 
 	"github.com/intervention-engine/fhir/server"
 
@@ -24,7 +24,7 @@ func main() {
 
 	// configure the GORM Postgres driver and database connection
 	db, err := gorm.Open("postgres", *pgURL)
-	db.SingularTable(true)  // disable table name pluralization globally
+	db.SingularTable(true) // disable table name pluralization globally
 
 	if err != nil {
 		log.Fatal(err)
@@ -36,7 +36,7 @@ func main() {
 	}
 	// configure the stat interceptor
 	ptStatsInterceptor := &ptstats.PtStatsInterceptor{
-		CousubDA: &ptstats.PgCountySubdivisionDataAccess{DB: db},        
+		CousubDA:           &ptstats.PgCountySubdivisionDataAccess{DB: db},
 		SynthCountyStatsDA: &ptstats.PgSyntheticCountyStatsDataAccess{DB: db},
 		SynthCousubStatsDA: &ptstats.PgSyntheticCountySubdivisionStatsDataAccess{DB: db},
 	}

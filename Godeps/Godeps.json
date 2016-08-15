@@ -1,5 +1,5 @@
 {
-	"ImportPath": "gitlab.mitre.org/synthea/gofhir",
+	"ImportPath": "github.com/synthetichealth/gofhir",
 	"GoVersion": "go1.6",
 	"GodepVersion": "v74",
 	"Deps": [

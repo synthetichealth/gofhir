@@ -18,15 +18,15 @@ For information on installing and running only the FHIR server, please begin by 
 Following standard Go practices, you should clone the *fhir* repository under your `$GOPATH` src folder, using a package-based sub-path:
 
 ```
-$ mkdir -p $GOPATH/src/gitlab.mitre.org/synthea
-$ cd $GOPATH/src/gitlab.mitre.org/synthea
-$ git clone https://gitlab.mitre.org/synthea/gofhir.git
+$ mkdir -p $GOPATH/src/github.com/synthetichealth
+$ cd $GOPATH/src/github.com/synthetichealth
+$ git clone https://github.com/synthetichealth/gofhir.git
 ```
 
 Before you can run the FHIR server, you should build the `gofhir` executable:
 
 ```
-$ cd $GOPATH/src/gitlab.mitre.org/synthea/gofhir
+$ cd $GOPATH/src/github.com/synthetichealth/gofhir
 $ go build
 ```
 
