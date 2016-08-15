@@ -1,39 +1,16 @@
 package main
 
 import (
-	"bytes"
-	"database/sql"
 	"flag"
-	"io/ioutil"
 	"log"
 
-	"github.com/gin-gonic/gin"
+	"gitlab.mitre.org/synthea/gofhir/ptstats"
+
 	"github.com/intervention-engine/fhir/server"
-	_ "github.com/lib/pq"
+
+	"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm/dialects/postgres"
 )
-
-// StatExtractor is the middleware that handles the stat extraction
-type StatExtractor struct {
-	db *sql.DB
-}
-
-// Handler is invoked on every request to the Go FHIR server
-func (s *StatExtractor) Handler(c *gin.Context) {
-	// We probably only care about posts and puts...
-	if c.Request != nil && (c.Request.Method == "POST" || c.Request.Method == "PUT") {
-		// Read the body and close the stream
-		buf, _ := ioutil.ReadAll(c.Request.Body)
-		c.Request.Body.Close()
-
-		// Do something with it -- replace the line below to use the sql package to do whatever
-		log.Printf("body: %s", buf)
-
-		// We need to replenish the body since we drained the stream
-		c.Request.Body = ioutil.NopCloser(bytes.NewReader(buf))
-	}
-	// Go to the next handler
-	c.Next()
-}
 
 func main() {
 	// set up the commandline flags (-mongo and -pgurl)
@@ -45,22 +22,28 @@ func main() {
 		log.Fatal("You must supply a pgurl flag value")
 	}
 
-	// setup the pg driver connection
-	db, err := sql.Open("postgres", *pgURL)
+	// configure the GORM Postgres driver and database connection
+	db, err := gorm.Open("postgres", *pgURL)
+	db.SingularTable(true)  // disable table name pluralization globally
+
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer db.Close()
 	// ping the db to ensure we connected successfully
-	if err := db.Ping(); err != nil {
+	if err := db.DB().Ping(); err != nil {
 		log.Fatal(err)
 	}
-	// configure the stat extractor
-	statExtractor := &StatExtractor{db: db}
+	// configure the stat interceptor
+	ptStatsInterceptor := &ptstats.PtStatsInterceptor{
+		CousubDA: &ptstats.PgCountySubdivisionDataAccess{DB: db},        
+		SynthCountyStatsDA: &ptstats.PgSyntheticCountyStatsDataAccess{DB: db},
+		SynthCousubStatsDA: &ptstats.PgSyntheticCountySubdivisionStatsDataAccess{DB: db},
+	}
 
 	// setup and run the server
 	s := server.NewServer(*mongoHost)
-	s.Engine.Use(statExtractor.Handler)
+	s.Engine.Use(ptStatsInterceptor.Handler)
 	s.Run(server.Config{
 		UseSmartAuth:         false,
 		UseLoggingMiddleware: false,
