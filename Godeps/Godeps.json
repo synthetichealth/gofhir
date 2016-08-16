@@ -1,7 +1,7 @@
 {
 	"ImportPath": "github.com/synthetichealth/gofhir",
 	"GoVersion": "go1.6",
-	"GodepVersion": "v74",
+	"GodepVersion": "v63",
 	"Deps": [
 		{
 			"ImportPath": "github.com/gin-gonic/gin",
@@ -24,18 +24,18 @@
 		},
 		{
 			"ImportPath": "github.com/intervention-engine/fhir/models",
-			"Comment": "DSTU1-154-ga972688",
-			"Rev": "a972688787c04ddbe95cba3b3a538d774b6bcac7"
+			"Comment": "DSTU1-179-gff0f4ab",
+			"Rev": "ff0f4ab6f65574c0be2c1d38302e42d2fd9c1eaf"
 		},
 		{
 			"ImportPath": "github.com/intervention-engine/fhir/search",
-			"Comment": "DSTU1-154-ga972688",
-			"Rev": "a972688787c04ddbe95cba3b3a538d774b6bcac7"
+			"Comment": "DSTU1-179-gff0f4ab",
+			"Rev": "ff0f4ab6f65574c0be2c1d38302e42d2fd9c1eaf"
 		},
 		{
 			"ImportPath": "github.com/intervention-engine/fhir/server",
-			"Comment": "DSTU1-154-ga972688",
-			"Rev": "a972688787c04ddbe95cba3b3a538d774b6bcac7"
+			"Comment": "DSTU1-179-gff0f4ab",
+			"Rev": "ff0f4ab6f65574c0be2c1d38302e42d2fd9c1eaf"
 		},
 		{
 			"ImportPath": "github.com/jinzhu/gorm",
