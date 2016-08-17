@@ -73,6 +73,16 @@ The following tables are relevant for Synthetic Mass statistics:
 
 All of this data is **for Massachusetts only**.
 
+Connect to the Development Database
+-----------------------------------
+When you run the `gofhir` server specify the following `-pgurl`:
+
+```
+$ ./gofhir -pgurl postgres://fhir_test:fhir_test@localhost/fhir_test?sslmode=disable
+```
+
+This points the server to the local development database.
+
 Removing the Development Database
 ---------------------------------
 To remove the development database, from the `postgres/` folder run `pgcleanup.sh`:
