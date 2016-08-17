@@ -15,7 +15,7 @@ import (
 func main() {
 	// set up the commandline flags (-mongo and -pgurl)
 	mongoHost := flag.String("mongohost", "localhost", "the hostname of the mongo database")
-	pgURL := flag.String("pgurl", "", "The PG connection URL (e.g., postgres://pqgotest:password@localhost/pqgotest?sslmode=verify-full)")
+	pgURL := flag.String("pgurl", "", "The PG connection URL (e.g., postgres://username:password@localhost/dbname?sslmode=disable)")
 	flag.Parse()
 
 	if *pgURL == "" {
@@ -34,16 +34,15 @@ func main() {
 	if err := db.DB().Ping(); err != nil {
 		log.Fatal(err)
 	}
-	// configure the stat interceptor
-	ptStatsInterceptor := &ptstats.PtStatsInterceptor{
-		CousubDA:           &ptstats.PgCountySubdivisionDataAccess{DB: db},
-		SynthCountyStatsDA: &ptstats.PgSyntheticCountyStatsDataAccess{DB: db},
-		SynthCousubStatsDA: &ptstats.PgSyntheticCountySubdivisionStatsDataAccess{DB: db},
-	}
 
-	// setup and run the server
+	// setup the server
 	s := server.NewServer(*mongoHost)
-	s.Engine.Use(ptStatsInterceptor.Handler)
+
+	// register interceptors
+	s.AddInterceptor(op, resourceType, handler)
+	s.AddInterceptor(op, resourceType, handler)
+
+	// run the server
 	s.Run(server.Config{
 		UseSmartAuth:         false,
 		UseLoggingMiddleware: false,

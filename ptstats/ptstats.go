@@ -7,33 +7,14 @@ Carlton Duffett
 package ptstats
 
 import (
-	"bytes"
-	"encoding/json"
-	"io/ioutil"
-	"log"
-
+	"errors"
+	"fmt"
 	"github.com/gin-gonic/gin"
-
+	"github.com/intervention-engine/fhir/models"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
+	"log"
 )
-
-// Generic address that will be automatically populated by json.Unmarshal() when
-// decoding a JSON Patient object in a POST/PUT body.
-type Address struct {
-	Line       []string
-	City       string
-	State      string
-	PostalCode string
-}
-
-// Generic patient that will be automatically populated by json.Unmarshal() when
-// decoding a JSON Patient object in a PUT/POST body.
-type Patient struct {
-	Id      string
-	Gender  string
-	Address []Address
-}
 
 // CountySubdivision is a GORM model that maps to the "tiger.cousub" table.
 type CountySubdivision struct {
@@ -119,7 +100,6 @@ type SyntheticCountyStatsDataAccess interface {
 	GetMalePopulation(countyFp string) int64
 	GetFemalePopulation(countyFp string) int64
 	GetPopulationPerSquareMile(countyFp string) float64
-
 	AddMale(countyFp string)
 	AddFemale(countyFp string)
 	RemoveMale(countyFp string)
@@ -197,7 +177,6 @@ type SyntheticCountySubdivisionStatsDataAccess interface {
 	GetMalePopulation(countyFp string, cousubFp string) int64
 	GetFemalePopulation(countyFp string, cousubFp string) int64
 	GetPopulationPerSquareMile(countyFp string, cousubFp string) float64
-
 	AddMale(countyFp string, cousubFp string)
 	AddFemale(countyFp string, cousubFp string)
 	RemoveMale(countyFp string, cousubFp string)
@@ -267,94 +246,180 @@ func (da *PgSyntheticCountySubdivisionStatsDataAccess) modifyPopulationCount(cou
 	})
 }
 
-// Middleware that handles the interceptor
-type PtStatsInterceptor struct {
-	CousubDA           CountySubdivisionDataAccess
-	SynthCountyStatsDA SyntheticCountyStatsDataAccess
-	SynthCousubStatsDA SyntheticCountySubdivisionStatsDataAccess
+// PatientStatsDataAccess provides a common high-level interface to each of the
+// interceptor handlers for modify patient statistics in the Postgres database
+type PatientStatsDataAccess struct {
+	countyStats *PgSyntheticCountyStatsDataAccess
+	cousubStats *PgSyntheticCountySubdivisionStatsDataAccess
+	cousub      *PgCountySubdivisionDataAccess
+	cousubFp    string
+	countyFp    string
 }
 
-func (s *PtStatsInterceptor) UpdatePatientStats(c *gin.Context) {
+func (da *PatientStatsDataAccess) identifyCountyAndSubdivision(patient *models.Patient) error {
+	city := patient.Address[0].City
+	if city == "" {
+		return errors.New("identifyCountyAndSubdivision: No city found in patient's address")
+	}
 
-	// Read the body and close the stream
-	body, _ := ioutil.ReadAll(c.Request.Body)
-	c.Request.Body.Close()
-	// We need to replenish the body since we drained the stream
-	c.Request.Body = ioutil.NopCloser(bytes.NewReader(body))
+	cousubFp := da.cousub.GetCountySubdivisionFp(city)
+	if cousubFp == "00000" || cousubFp == "" {
+		return errors.New(fmt.Sprintf("identifyCountyAndSubdivision: City %s does not exist", city))
+	}
 
-	// Parse the patient from the request body
-	var patient Patient
-	err := json.Unmarshal(body, &patient)
+	da.cousubFp = cousubFp
+	da.countyFp = da.cousub.GetCountyFp(da.cousubFp)
+	return nil
+}
+
+func (da *PatientStatsDataAccess) AddMale(patient *models.Patient) error {
+
+	err := da.identifyCountyAndSubdivision(patient)
 
 	if err != nil {
-		log.Printf("ptstats: %s", err.Error())
-		return
+		return err
 	}
 
-	city := patient.Address[0].City
-	gender := patient.Gender
-
-	switch {
-	case city == "":
-		log.Printf("ptstats: No patient city in request body")
-		return
-
-	case gender == "":
-		log.Printf("ptstats: No patient gender in request body")
-		return
-	}
-
-	// Update Subdivision and County statistics
-	cousubFp := s.CousubDA.GetCountySubdivisionFp(city)
-	if cousubFp == "00000" || cousubFp == "" {
-		log.Printf("ptstats: City %s does not exist", city)
-		return
-	}
-	countyFp := s.CousubDA.GetCountyFp(cousubFp)
-
-	switch c.Request.Method {
-	case "POST":
-		switch gender {
-		case "male":
-			s.SynthCousubStatsDA.AddMale(countyFp, cousubFp)
-			s.SynthCountyStatsDA.AddMale(countyFp)
-		case "female":
-			s.SynthCousubStatsDA.AddFemale(countyFp, cousubFp)
-			s.SynthCountyStatsDA.AddFemale(countyFp)
-		default:
-			log.Printf("ptstats: invalid patient gender")
-			return
-		}
-
-	case "DELETE":
-		switch gender {
-		case "male":
-			s.SynthCousubStatsDA.RemoveMale(countyFp, cousubFp)
-			s.SynthCountyStatsDA.RemoveMale(countyFp)
-		case "female":
-			s.SynthCousubStatsDA.RemoveFemale(countyFp, cousubFp)
-			s.SynthCountyStatsDA.RemoveFemale(countyFp)
-		default:
-			log.Printf("ptstats: invalid patient gender")
-			return
-		}
+	switch patient.Gender {
+	case "male":
+		da.cousubStats.AddMale(da.countyFp, da.cousubFp)
+		da.countyStats.AddMale(da.countyFp)
+		return nil
 	default:
-		log.Printf("ptstats: unsupported HTTP method %s", c.Request.Method)
-		return
+		return errors.New("AddMale: Patient is not a male")
 	}
 }
 
-// Handler is registered with the GoFHIR server and invoked on every request
-func (s *PtStatsInterceptor) Handler(c *gin.Context) {
+func (da *PatientStatsDataAccess) AddFemale(patient *models.Patient) error {
 
-	// This intereptor is only needed for Create or Delete operations on a Patient
-	if c.Request != nil &&
-		c.Request.URL.Path == "/Patient" &&
-		(c.Request.Method == "POST" || c.Request.Method == "DELETE") {
+	err := da.identifyCountyAndSubdivision(patient)
 
-		s.UpdatePatientStats(c)
+	if err != nil {
+		return err
 	}
 
-	// Go to the next handler
-	c.Next()
+	switch patient.Gender {
+	case "female":
+		da.cousubStats.AddFemale(da.countyFp, da.cousubFp)
+		da.countyStats.AddFemale(da.countyFp)
+		return nil
+	default:
+		return errors.New("AddFemale: Patient is not a female")
+	}
 }
+
+func (da *PatientStatsDataAccess) RemoveMale(patient *models.Patient) error {
+
+	err := da.identifyCountyAndSubdivision(patient)
+
+	if err != nil {
+		return err
+	}
+
+	switch patient.Gender {
+	case "male":
+		da.cousubStats.RemoveMale(da.countyFp, da.cousubFp)
+		da.countyStats.RemoveMale(da.countyFp)
+		return nil
+	default:
+		return errors.New("RemoveMale: Patient is not a male")
+	}
+}
+
+func (da *PatientStatsDataAccess) RemoveFemale(patient *models.Patient) error {
+
+	err := da.identifyCountyAndSubdivision(patient)
+
+	if err != nil {
+		return err
+	}
+
+	switch patient.Gender {
+	case "female":
+		da.cousubStats.RemoveFemale(da.countyFp, da.cousubFp)
+		da.countyStats.RemoveFemale(da.countyFp)
+		return nil
+	default:
+		return errors.New("RemoveFemale: Patient is not a female")
+	}
+}
+
+// PatientStatsCreateInterceptor intercepts any new patient resources added to the database
+// and adds that patient's statistics to the Synthetic Mass stats
+type PatientStatsCreateInterceptor struct {
+	DataAccess *PatientStatsDataAccess
+}
+
+func (s *PatientStatsCreateInterceptor) After(resource interface{}) {
+	patient, ok := resource.(*models.Patient)
+
+	if ok {
+		gender := patient.Gender
+		switch gender {
+		case "male":
+			s.DataAccess.AddMale(patient)
+		case "female":
+			s.DataAccess.AddFemale(patient)
+		default:
+			log.Printf("PatientStatsCreateInterceptor: invalid gender for patient %s\n", patient.Id)
+		}
+	}
+}
+
+// unused interceptor handlers:
+func (s *PatientStatsCreateInterceptor) Before(resource interface{})             {}
+func (s *PatientStatsCreateInterceptor) OnError(err error, resource interface{}) {}
+
+// PatientStatsUpdateInterceptor intercepts any updated patient resources
+// and updates that patient's statistics in the Synthetic Mass stats
+type PatientStatsUpdateInterceptor struct {
+	DataAccess *PatientStatsDataAccess
+	// The state of the patient before the database update, for comparison after the database update
+	patientBefore models.Patient
+}
+
+func (s *PatientStatsUpdateInterceptor) Before(resource interface{}) {
+	patient, ok := resource.(*models.Patient)
+
+	if ok {
+		s.patientBefore = patient
+	}
+}
+
+func (s *PatientStatsUpdateInterceptor) After(resource interface{}) {
+	patientAfter := resource.(*models.Patient)
+
+	if ok {
+		// see if patient gender changed, and update stats
+		if s.patientBefore.Gender == "male" && patientAfter.Gender == "female" {
+			s.DataAccess.RemoveMale(s.patientBefore)
+			s.DataAccess.AddFemale(patientAfter)
+		}
+	}
+}
+
+// unused interceptor handler:
+func (s *PatientStatsUpdateInterceptor) OnError(err error, resource interface{}) {}
+
+// PatientStatsDeleteInterceptor intercepts any deleted patient resources
+// and removes that patient's statistics from the Synthetic Mass stats
+type PatientStatsDeleteInterceptor struct {
+	DataAccess *PatientStatsDataAccess
+}
+
+func (s *PatientStatsDeleteInterceptor) After(resource interface{}) {
+	if ok {
+		gender := patient.Gender
+		switch gender {
+		case "male":
+			s.DataAccess.RemoveMale(patient)
+		case "female":
+			s.DataAccess.RemoveFemale(patient)
+		default:
+			log.Printf("PatientStatsCreateInterceptor: invalid gender for patient %s\n", patient.Id)
+		}
+	}
+}
+
+func (s *PatientStatsDeleteInterceptor) Before(resource interface{})             {}
+func (s *PatientStatsDeleteInterceptor) OnError(err error, resource interface{}) {}
