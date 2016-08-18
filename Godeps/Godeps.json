@@ -24,18 +24,18 @@
 		},
 		{
 			"ImportPath": "github.com/intervention-engine/fhir/models",
-			"Comment": "DSTU1-188-g7de079f",
-			"Rev": "7de079feeab23c83ea378cda614080e97dc21ae5"
+			"Comment": "DSTU1-190-g9d7e811",
+			"Rev": "9d7e81187d76f923fa34c5e35d6aaa8557909b06"
 		},
 		{
 			"ImportPath": "github.com/intervention-engine/fhir/search",
-			"Comment": "DSTU1-188-g7de079f",
-			"Rev": "7de079feeab23c83ea378cda614080e97dc21ae5"
+			"Comment": "DSTU1-190-g9d7e811",
+			"Rev": "9d7e81187d76f923fa34c5e35d6aaa8557909b06"
 		},
 		{
 			"ImportPath": "github.com/intervention-engine/fhir/server",
-			"Comment": "DSTU1-188-g7de079f",
-			"Rev": "7de079feeab23c83ea378cda614080e97dc21ae5"
+			"Comment": "DSTU1-190-g9d7e811",
+			"Rev": "9d7e81187d76f923fa34c5e35d6aaa8557909b06"
 		},
 		{
 			"ImportPath": "github.com/jinzhu/gorm",
