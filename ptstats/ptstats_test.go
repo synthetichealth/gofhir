@@ -7,23 +7,19 @@ Carlton Duffett
 package ptstats
 
 import (
-	"bytes"
-    "fmt"
-	"github.com/gin-gonic/gin"
+	"github.com/intervention-engine/fhir/models"
 	"github.com/stretchr/testify/assert"
-	"io/ioutil"
-	"net/http"
 	"testing"
 )
 
 type CountyStats struct {
-    Population, PopulationMale, PopulationFemale int64
-    PopulationPerSquareMile float64
+	Population, PopulationMale, PopulationFemale int64
+	PopulationPerSquareMile                      float64
 }
 
 type CousubStats struct {
-    Population, PopulationMale, PopulationFemale int64
-    PopulationPerSquareMile float64
+	Population, PopulationMale, PopulationFemale int64
+	PopulationPerSquareMile                      float64
 }
 
 // TestCountySubdivisionDataAccess implements the CountySubdivisionDataAccess
@@ -71,337 +67,459 @@ func (da *TestCountySubdivisionDataAccess) GetStateFp(countyFp string) string {
 	return "025" // Massachusetts
 }
 
+// TestSyntheticCountyStatsData is a collection of data items for a single county
+type TestSyntheticCountyStatsData struct {
+	Pop, MalePop, FemalePop int64
+	SqMiles, PopPerSqMile   float64
+}
+
+func (data *TestSyntheticCountyStatsData) ModifyPopulationCount(countyFp string, maleDelta, femaleDelta int64) {
+	data.Pop += (maleDelta + femaleDelta)
+	data.MalePop += maleDelta
+	data.FemalePop += femaleDelta
+	data.PopPerSqMile = float64(data.Pop) / data.SqMiles
+}
+
 // TestSyntheticCountyStatsDataAccess implements the SyntheticCountyStatsDataAccess
 // interface without a database connection for testing purposes only.
 type TestSyntheticCountyStatsDataAccess struct {
-	pop, malePop, femalePop int64
-	sqMiles, popPerSqMile   float64
+	data map[string]*TestSyntheticCountyStatsData
 }
 
 func (da *TestSyntheticCountyStatsDataAccess) GetPopulation(countyFp string) int64 {
-	return da.pop
+	return da.data[countyFp].Pop
 }
 
 func (da *TestSyntheticCountyStatsDataAccess) GetMalePopulation(countyFp string) int64 {
-	return da.malePop
+	return da.data[countyFp].MalePop
 }
 
 func (da *TestSyntheticCountyStatsDataAccess) GetFemalePopulation(countyFp string) int64 {
-	return da.femalePop
+	return da.data[countyFp].FemalePop
 }
 
 func (da *TestSyntheticCountyStatsDataAccess) GetPopulationPerSquareMile(countyFp string) float64 {
-	return da.popPerSqMile
+	return da.data[countyFp].PopPerSqMile
 }
 
 func (da *TestSyntheticCountyStatsDataAccess) AddMale(countyFp string) {
-	da.modifyPopulationCount(countyFp, 1, 0)
+	da.data[countyFp].ModifyPopulationCount(countyFp, 1, 0)
 }
 
 func (da *TestSyntheticCountyStatsDataAccess) AddFemale(countyFp string) {
-	da.modifyPopulationCount(countyFp, 0, 1)
+	da.data[countyFp].ModifyPopulationCount(countyFp, 0, 1)
 }
 
 func (da *TestSyntheticCountyStatsDataAccess) RemoveMale(countyFp string) {
-	da.modifyPopulationCount(countyFp, -1, 0)
+	da.data[countyFp].ModifyPopulationCount(countyFp, -1, 0)
 }
 
 func (da *TestSyntheticCountyStatsDataAccess) RemoveFemale(countyFp string) {
-	da.modifyPopulationCount(countyFp, 0, -1)
+	da.data[countyFp].ModifyPopulationCount(countyFp, 0, -1)
 }
 
-func (da *TestSyntheticCountyStatsDataAccess) modifyPopulationCount(countyFp string, maleDelta, femaleDelta int64) {
-	da.pop += (maleDelta + femaleDelta)
-	da.malePop += maleDelta
-	da.femalePop += femaleDelta
-	da.popPerSqMile = float64(da.pop) / da.sqMiles
+// TestSyntheticCountySubdivisionData is a collection of data items for a single county subdivision
+type TestSyntheticCountySubdivisionStatsData struct {
+	Pop, MalePop, FemalePop int64
+	SqMiles, PopPerSqMile   float64
+}
+
+func (data *TestSyntheticCountySubdivisionStatsData) ModifyPopulationCount(countyFp, cousubFp string, maleDelta, femaleDelta int64) {
+	data.Pop += (maleDelta + femaleDelta)
+	data.MalePop += maleDelta
+	data.FemalePop += femaleDelta
+	data.PopPerSqMile = float64(data.Pop) / data.SqMiles
 }
 
 // TestSyntheticCountySubdivisionStatsDataAccess implements the SyntheticCountySubdivisonStatsDataAccess
 // interface without a database connection for testing purposes only.
 type TestSyntheticCountySubdivisionStatsDataAccess struct {
-	pop, malePop, femalePop int64
-	sqMiles, popPerSqMile   float64
+	data map[string]*TestSyntheticCountySubdivisionStatsData
 }
 
 func (da *TestSyntheticCountySubdivisionStatsDataAccess) GetPopulation(countyFp string, cousubFp string) int64 {
-	return da.pop
+	return da.data[cousubFp].Pop
 }
 
 func (da *TestSyntheticCountySubdivisionStatsDataAccess) GetMalePopulation(countyFp string, cousubFp string) int64 {
-	return da.malePop
+	return da.data[cousubFp].MalePop
 }
 
 func (da *TestSyntheticCountySubdivisionStatsDataAccess) GetFemalePopulation(countyFp string, cousubFp string) int64 {
-	return da.femalePop
+	return da.data[cousubFp].FemalePop
 }
 
 func (da *TestSyntheticCountySubdivisionStatsDataAccess) GetPopulationPerSquareMile(countyFp string, cousubFp string) float64 {
-	return da.popPerSqMile
+	return da.data[cousubFp].PopPerSqMile
 }
 
 func (da *TestSyntheticCountySubdivisionStatsDataAccess) AddMale(countyFp string, cousubFp string) {
-	da.modifyPopulationCount(countyFp, cousubFp, 1, 0)
+	da.data[cousubFp].ModifyPopulationCount(countyFp, cousubFp, 1, 0)
 }
 
 func (da *TestSyntheticCountySubdivisionStatsDataAccess) AddFemale(countyFp string, cousubFp string) {
-	da.modifyPopulationCount(countyFp, cousubFp, 0, 1)
+	da.data[cousubFp].ModifyPopulationCount(countyFp, cousubFp, 0, 1)
 }
 
 func (da *TestSyntheticCountySubdivisionStatsDataAccess) RemoveMale(countyFp string, cousubFp string) {
-	da.modifyPopulationCount(countyFp, cousubFp, -1, 0)
+	da.data[cousubFp].ModifyPopulationCount(countyFp, cousubFp, -1, 0)
 }
 
 func (da *TestSyntheticCountySubdivisionStatsDataAccess) RemoveFemale(countyFp string, cousubFp string) {
-	da.modifyPopulationCount(countyFp, cousubFp, 0, -1)
+	da.data[cousubFp].ModifyPopulationCount(countyFp, cousubFp, 0, -1)
 }
 
-func (da *TestSyntheticCountySubdivisionStatsDataAccess) modifyPopulationCount(countyFp, cousubFp string, maleDelta, femaleDelta int64) {
-	da.pop += (maleDelta + femaleDelta)
-	da.malePop += maleDelta
-	da.femalePop += femaleDelta
-	da.popPerSqMile = float64(da.pop) / da.sqMiles
-}
-
-// Test harness for PtStatsInterceptor
-func TestPtStatsInterceptor(t *testing.T) {
-
+// TestPatientStatsCreateInterceptor tests the PatientStatsCreateInterceptor's ability to update
+// patient statistics after a new patient is added to the database
+func TestPatientStatsCreateInterceptor(t *testing.T) {
 	assert := assert.New(t)
 
-	sqMiles := 100.0
-	cousubDA := &TestCountySubdivisionDataAccess{}
-	synthCountyStatsDA := &TestSyntheticCountyStatsDataAccess{pop: 20, sqMiles: sqMiles}
-	synthCousubStatsDA := &TestSyntheticCountySubdivisionStatsDataAccess{sqMiles: sqMiles}
+	da := createNewPatientStatsDataAccess()
 
-	s := &PtStatsInterceptor{
-		CousubDA:           cousubDA,
-		SynthCountyStatsDA: synthCountyStatsDA,
-		SynthCousubStatsDA: synthCousubStatsDA,
+	createInterceptor := &PatientStatsCreateInterceptor{
+		DataAccess: da,
 	}
 
-	body := make([]byte, 512)
-	var cousubFp, countyFp string
-    var oldCounty CountyStats
-    var oldCousub CousubStats
-	var newCountyPopPerSqMile, newCousubPopPerSqMile float64
+	// 1. Test a CreateMale operation
+	// ------------------------------------------------------------------------
+	patient := createNewPatient("Boston", "male")
+	countyFp, cousubFp, err := da.IdentifyCountyAndSubdivision(patient)
 
-	// 1. Test the interceptor for an AddFemale() operation
-	// ====================================================
-	body = buildPatientRequestObject("female", "Boston")
-	cousubFp = s.CousubDA.GetCountySubdivisionFp("Boston")
-	countyFp = s.CousubDA.GetCountyFp(cousubFp)
+	if err != nil {
+		panic(err)
+	}
 
-	req, _ := http.NewRequest("POST", "http://example.com/Patient", ioutil.NopCloser(bytes.NewReader(body)))
-	c := &gin.Context{Request: req}
+	oldCounty := getCountyStatistics(da, countyFp)
+	oldCousub := getCousubStatistics(da, countyFp, cousubFp)
 
-	oldCounty = getCountyStatistics(s, countyFp)
-    oldCousub = getCousubStatistics(s, countyFp, cousubFp)
+	createInterceptor.After(patient)
 
-	s.UpdatePatientStats(c)
+	newCounty := getCountyStatistics(da, countyFp)
+	newCousub := getCousubStatistics(da, countyFp, cousubFp)
 
 	// Test updated county statistics
-	assert.Equal(oldCounty.Population+1, s.SynthCountyStatsDA.GetPopulation(countyFp), "County population should increment by 1")
-	assert.Equal(oldCounty.PopulationMale, s.SynthCountyStatsDA.GetMalePopulation(countyFp), "County male population should not change")
-	assert.Equal(oldCounty.PopulationFemale+1, s.SynthCountyStatsDA.GetFemalePopulation(countyFp), "County female population should increment by 1")
-	newCountyPopPerSqMile = float64(oldCounty.Population+1) / sqMiles
-	assert.Equal(newCountyPopPerSqMile, s.SynthCountyStatsDA.GetPopulationPerSquareMile(countyFp), "County population density should change with an increase in population")
+	assert.Equal(oldCounty.Population+1, newCounty.Population, "County population should increment by 1")
+	assert.Equal(oldCounty.PopulationMale+1, newCounty.PopulationMale, "County male population should increment by 1")
+	assert.Equal(oldCounty.PopulationFemale, newCounty.PopulationFemale, "County female population should not change")
+	newCountyPopPerSqMile := float64(oldCounty.Population+1) / 5.0 // 5.0 sqMiles
+	assert.Equal(newCountyPopPerSqMile, newCounty.PopulationPerSquareMile, "County population density should change with an increase in population")
 
 	// Test updated cousub statistics
-	assert.Equal(oldCousub.Population+1, s.SynthCousubStatsDA.GetPopulation(countyFp, cousubFp), "Subdivision population should increment by 1")
-	assert.Equal(oldCousub.PopulationMale, s.SynthCousubStatsDA.GetMalePopulation(countyFp, cousubFp), "Subdivision male population should not change")
-	assert.Equal(oldCousub.PopulationFemale+1, s.SynthCousubStatsDA.GetFemalePopulation(countyFp, cousubFp), "Subdivision female population should increment by 1")
-	newCousubPopPerSqMile = float64(oldCousub.Population+1) / sqMiles
-	assert.Equal(newCousubPopPerSqMile, s.SynthCousubStatsDA.GetPopulationPerSquareMile(countyFp, cousubFp), "Subdivision population density should change with an increase in population")
+	assert.Equal(oldCousub.Population+1, newCousub.Population, "Subdivision population should increment by 1")
+	assert.Equal(oldCousub.PopulationMale+1, newCousub.PopulationMale, "Subdivision male population should increment by 1")
+	assert.Equal(oldCousub.PopulationFemale, newCousub.PopulationFemale, "Subdivision female population should not change")
+	newCousubPopPerSqMile := float64(oldCousub.Population+1) / 5.0
+	assert.Equal(newCousubPopPerSqMile, newCousub.PopulationPerSquareMile, "Subdivision population density should change with an increase in population")
 
-	// 2. Test the interceptor for an AddMale() operation
-	// ==================================================
-	body = buildPatientRequestObject("male", "Bedford")
-	cousubFp = s.CousubDA.GetCountySubdivisionFp("Bedford")
-	countyFp = s.CousubDA.GetCountyFp(cousubFp)
+	// 2. Test a CreateFemale operation
+	// ------------------------------------------------------------------------
+	patient.Gender = "female"
 
-	req, _ = http.NewRequest("POST", "http://example.com/Patient", ioutil.NopCloser(bytes.NewReader(body)))
-	c.Request = req
+	oldCounty = newCounty
+	oldCousub = newCousub
 
-	oldCounty = getCountyStatistics(s, countyFp)
-    oldCousub = getCousubStatistics(s, countyFp, cousubFp)
+	createInterceptor.After(patient)
 
-	s.UpdatePatientStats(c)
+	newCounty = getCountyStatistics(da, countyFp)
+	newCousub = getCousubStatistics(da, countyFp, cousubFp)
 
 	// Test updated county statistics
-	assert.Equal(oldCounty.Population+1, s.SynthCountyStatsDA.GetPopulation(countyFp), "County population should increment by 1")
-	assert.Equal(oldCounty.PopulationMale+1, s.SynthCountyStatsDA.GetMalePopulation(countyFp), "County male population should increment by 1")
-	assert.Equal(oldCounty.PopulationFemale, s.SynthCountyStatsDA.GetFemalePopulation(countyFp), "County female population should not change")
-	newCountyPopPerSqMile = float64(oldCounty.Population+1) / sqMiles
-	assert.Equal(newCountyPopPerSqMile, s.SynthCountyStatsDA.GetPopulationPerSquareMile(countyFp), "County population density should change with an increase in population")
+	assert.Equal(oldCounty.Population+1, newCounty.Population, "County population should increment by 1")
+	assert.Equal(oldCounty.PopulationMale, newCounty.PopulationMale, "County male population should not change")
+	assert.Equal(oldCounty.PopulationFemale+1, newCounty.PopulationFemale, "County female population should increment by 1")
+	newCountyPopPerSqMile = float64(oldCounty.Population+1) / 5.0
+	assert.Equal(newCountyPopPerSqMile, newCounty.PopulationPerSquareMile, "County population density should change with an increase in population")
 
 	// Test updated cousub statistics
-	assert.Equal(oldCousub.Population+1, s.SynthCousubStatsDA.GetPopulation(countyFp, cousubFp), "Subdivision population should increment by 1")
-	assert.Equal(oldCousub.PopulationMale+1, s.SynthCousubStatsDA.GetMalePopulation(countyFp, cousubFp), "Subdivision male population should increment by 1")
-	assert.Equal(oldCousub.PopulationFemale, s.SynthCousubStatsDA.GetFemalePopulation(countyFp, cousubFp), "Subdivision female population should not change")
-	newCousubPopPerSqMile = float64(oldCousub.Population+1) / sqMiles
-	assert.Equal(newCousubPopPerSqMile, s.SynthCousubStatsDA.GetPopulationPerSquareMile(countyFp, cousubFp), "Subdivision population density should change with an increase in population")
+	assert.Equal(oldCousub.Population+1, newCousub.Population, "Subdivision population should increment by 1")
+	assert.Equal(oldCousub.PopulationMale, newCousub.PopulationMale, "Subdivision male population should not change")
+	assert.Equal(oldCousub.PopulationFemale+1, newCousub.PopulationFemale, "Subdivision female population should increment by 1")
+	newCousubPopPerSqMile = float64(oldCousub.Population+1) / 5.0
+	assert.Equal(newCousubPopPerSqMile, newCousub.PopulationPerSquareMile, "Subdivision population density should change with an increase in population")
+}
 
-	// 3. Test the interceptor for a RemoveMale() operation
-	// ====================================================
-	req, _ = http.NewRequest("DELETE", "http://example.com/Patient", ioutil.NopCloser(bytes.NewReader(body)))
-	c.Request = req
+// TestPatientStatsUpdateInterceptor tests the PatientStatsUpdateInterceptor's ability to update
+// patient statistics after a new patient is added to the database
+func TestPatientStatsUpdateInterceptor(t *testing.T) {
+	assert := assert.New(t)
 
-	oldCounty = getCountyStatistics(s, countyFp)
-    oldCousub = getCousubStatistics(s, countyFp, cousubFp)
+	da := createNewPatientStatsDataAccess()
 
-	s.UpdatePatientStats(c)
+	updateInterceptor := &PatientStatsUpdateInterceptor{
+		DataAccess: da,
+	}
+
+	// 3. Test a UpdateMale operation with no relevant changes
+	// ------------------------------------------------------------------------
+	patient := createNewPatient("Boston", "male")
+	countyFp, cousubFp, err := da.IdentifyCountyAndSubdivision(patient)
+
+	if err != nil {
+		panic(err)
+	}
+
+	oldCounty := getCountyStatistics(da, countyFp)
+	oldCousub := getCousubStatistics(da, countyFp, cousubFp)
+
+	updateInterceptor.Before(patient)
+	updateInterceptor.After(patient)
+
+	newCounty := getCountyStatistics(da, countyFp)
+	newCousub := getCousubStatistics(da, countyFp, cousubFp)
+
+	testStatsDontChange(t, oldCounty, newCounty, oldCousub, newCousub)
+
+	// 4. Test a UpdateFemale operation with no relevant changes
+	// ------------------------------------------------------------------------
+	patient.Gender = "female"
+
+	oldCounty = getCountyStatistics(da, countyFp)
+	oldCousub = getCousubStatistics(da, countyFp, cousubFp)
+
+	updateInterceptor.Before(patient)
+	updateInterceptor.After(patient)
+
+	newCounty = getCountyStatistics(da, countyFp)
+	newCousub = getCousubStatistics(da, countyFp, cousubFp)
+
+	testStatsDontChange(t, oldCounty, newCounty, oldCousub, newCousub)
+
+	// 5. Test a UpdateMale operation with relevant statistic changes
+	// ------------------------------------------------------------------------
+	patient.Gender = "male"
+
+	oldCounty = getCountyStatistics(da, countyFp)
+	oldCousub = getCousubStatistics(da, countyFp, cousubFp)
+
+	updateInterceptor.Before(patient)
+	afterPatient := createNewPatient("Bedford", "male")
+	updateInterceptor.After(afterPatient)
+
+	newCounty = getCountyStatistics(da, countyFp)
+	newCousub = getCousubStatistics(da, countyFp, cousubFp)
+
+	// we test here for a decrease in Boston's cousub and county populations. There
+	// is no need to create a separate data layer to manage Bedford's statistics,
+	// since we already verified that we can add a new male to the data layer in
+	// TestPatientStatsCreateInterceptor.
 
 	// Test updated county statistics
-	assert.Equal(oldCounty.Population-1, s.SynthCountyStatsDA.GetPopulation(countyFp), "County population should decrement by 1")
-	assert.Equal(oldCounty.PopulationMale-1, s.SynthCountyStatsDA.GetMalePopulation(countyFp), "County male population should decrement by 1")
-	assert.Equal(oldCounty.PopulationFemale, s.SynthCountyStatsDA.GetFemalePopulation(countyFp), "County female population should not change")
-	newCountyPopPerSqMile = float64(oldCounty.Population-1) / sqMiles
-	assert.Equal(newCountyPopPerSqMile, s.SynthCountyStatsDA.GetPopulationPerSquareMile(countyFp), "County population density should change with an decrease in population")
+	assert.Equal(oldCounty.Population-1, newCounty.Population, "County population should decrement by 1")
+	assert.Equal(oldCounty.PopulationMale-1, newCounty.PopulationMale, "County male population should decrement by 1")
+	assert.Equal(oldCounty.PopulationFemale, newCounty.PopulationFemale, "County female population should not change")
+	newCountyPopPerSqMile := float64(oldCounty.Population-1) / 5.0
+	assert.Equal(newCountyPopPerSqMile, newCounty.PopulationPerSquareMile, "County population density should change with an decrease in population")
 
 	// Test updated cousub statistics
-	assert.Equal(oldCousub.Population-1, s.SynthCousubStatsDA.GetPopulation(countyFp, cousubFp), "Subdivision population should decrement by 1")
-	assert.Equal(oldCousub.PopulationMale-1, s.SynthCousubStatsDA.GetMalePopulation(countyFp, cousubFp), "Subdivision male population should decrement by 1")
-	assert.Equal(oldCousub.PopulationFemale, s.SynthCousubStatsDA.GetFemalePopulation(countyFp, cousubFp), "Subdivision female population should not change")
-	newCousubPopPerSqMile = float64(oldCousub.Population-1) / sqMiles
-	assert.Equal(newCousubPopPerSqMile, s.SynthCousubStatsDA.GetPopulationPerSquareMile(countyFp, cousubFp), "Subdivision population density should change with an decrease in population")
+	assert.Equal(oldCousub.Population-1, newCousub.Population, "Subdivision population should decrement by 1")
+	assert.Equal(oldCousub.PopulationMale-1, newCousub.PopulationMale, "Subdivision male population should decrement by 1")
+	assert.Equal(oldCousub.PopulationFemale, newCousub.PopulationFemale, "Subdivision female population should not change")
+	newCousubPopPerSqMile := float64(oldCousub.Population-1) / 5.0
+	assert.Equal(newCousubPopPerSqMile, newCousub.PopulationPerSquareMile, "Subdivision population density should change with an decrease in population")
 
-	// 4. Test the interceptor for a RemoveFemale() operation
-	// ======================================================
-	body = buildPatientRequestObject("female", "Boston")
-	cousubFp = s.CousubDA.GetCountySubdivisionFp("Boston")
-	countyFp = s.CousubDA.GetCountyFp(cousubFp)
+	// 6. Test a UpdateFemale operation with relevant statistic changes
+	// ------------------------------------------------------------------------
+	patient.Gender = "female"
 
-	req, _ = http.NewRequest("DELETE", "http://example.com/Patient", ioutil.NopCloser(bytes.NewReader(body)))
-	c.Request = req
+	oldCounty = getCountyStatistics(da, countyFp)
+	oldCousub = getCousubStatistics(da, countyFp, cousubFp)
 
-	oldCounty = getCountyStatistics(s, countyFp)
-    oldCousub = getCousubStatistics(s, countyFp, cousubFp)
+	updateInterceptor.Before(patient)
+	afterPatient.Gender = "female"
+	updateInterceptor.After(afterPatient)
 
-	s.UpdatePatientStats(c)
+	newCounty = getCountyStatistics(da, countyFp)
+	newCousub = getCousubStatistics(da, countyFp, cousubFp)
 
 	// Test updated county statistics
-	assert.Equal(oldCounty.Population-1, s.SynthCountyStatsDA.GetPopulation(countyFp), "County population should decrement by 1")
-	assert.Equal(oldCounty.PopulationMale, s.SynthCountyStatsDA.GetMalePopulation(countyFp), "County male population should not change")
-	assert.Equal(oldCounty.PopulationFemale-1, s.SynthCountyStatsDA.GetFemalePopulation(countyFp), "County female population should decrement by 1")
-	newCountyPopPerSqMile = float64(oldCounty.Population-1) / sqMiles
-	assert.Equal(newCountyPopPerSqMile, s.SynthCountyStatsDA.GetPopulationPerSquareMile(countyFp), "County population density should change with an decrease in population")
+	assert.Equal(oldCounty.Population-1, newCounty.Population, "County population should decrement by 1")
+	assert.Equal(oldCounty.PopulationMale, newCounty.PopulationMale, "County male population should not change")
+	assert.Equal(oldCounty.PopulationFemale-1, newCounty.PopulationFemale, "County female population should decrement by 1")
+	newCountyPopPerSqMile = float64(oldCounty.Population-1) / 5.0
+	assert.Equal(newCountyPopPerSqMile, newCounty.PopulationPerSquareMile, "County population density should change with an decrease in population")
 
 	// Test updated cousub statistics
-	assert.Equal(oldCousub.Population-1, s.SynthCousubStatsDA.GetPopulation(countyFp, cousubFp), "Subdivision population should decrement by 1")
-	assert.Equal(oldCousub.PopulationMale, s.SynthCousubStatsDA.GetMalePopulation(countyFp, cousubFp), "Subdivision male population should not change")
-	assert.Equal(oldCousub.PopulationFemale-1, s.SynthCousubStatsDA.GetFemalePopulation(countyFp, cousubFp), "Subdivision female population should decrement by 1")
-	newCousubPopPerSqMile = float64(oldCousub.Population-1) / sqMiles
-	assert.Equal(newCousubPopPerSqMile, s.SynthCousubStatsDA.GetPopulationPerSquareMile(countyFp, cousubFp), "Subdivision population density should change with an decrease in population")
+	assert.Equal(oldCousub.Population-1, newCousub.Population, "Subdivision population should decrement by 1")
+	assert.Equal(oldCousub.PopulationMale, newCousub.PopulationMale, "Subdivision male population should not change")
+	assert.Equal(oldCousub.PopulationFemale-1, newCousub.PopulationFemale, "Subdivision female population should decrement by 1")
+	newCousubPopPerSqMile = float64(oldCousub.Population-1) / 5.0
+	assert.Equal(newCousubPopPerSqMile, newCousub.PopulationPerSquareMile, "Subdivision population density should change with an decrease in population")
+}
 
-	// 5. Test that stats don't change for a body missing patient city
-	// ===============================================================
-	body = buildPatientRequestObject("female", "")
-	cousubFp = s.CousubDA.GetCountySubdivisionFp("")
-	countyFp = s.CousubDA.GetCountyFp(cousubFp)
+// TestPatientStatsDeleteInterceptor tests the PatientStatsDeleteInterceptor's ability to update
+// patient statistics after a new patient is added to the database
+func TestPatientStatsDeleteInterceptor(t *testing.T) {
+	assert := assert.New(t)
 
-	req, _ = http.NewRequest("POST", "http://example.com/Patient", ioutil.NopCloser(bytes.NewReader(body)))
-	c.Request = req
-	testStatsDontChange(t, s, c, countyFp, cousubFp)
+	da := createNewPatientStatsDataAccess()
 
-	// 6. Test that stats don't change for a body missing patient gender
-	// =================================================================
-	body = buildPatientRequestObject("", "Boston")
-	cousubFp = s.CousubDA.GetCountySubdivisionFp("Boston")
-	countyFp = s.CousubDA.GetCountyFp(cousubFp)
+	deleteInterceptor := &PatientStatsDeleteInterceptor{
+		DataAccess: da,
+	}
 
-	req, _ = http.NewRequest("POST", "http://example.com/Patient", ioutil.NopCloser(bytes.NewReader(body)))
-	c.Request = req
-	testStatsDontChange(t, s, c, countyFp, cousubFp)
+	// 7. Test a DeleteMale operation
+	// ------------------------------------------------------------------------
+	patient := createNewPatient("Boston", "male")
+	countyFp, cousubFp, err := da.IdentifyCountyAndSubdivision(patient)
 
-	// 7. Test that stats don't change for HTTP methods that aren't POST or DELETE
-	// ===========================================================================
-	body = buildPatientRequestObject("male", "Boston")
-	methods := [6]string{"GET", "PUT", "HEAD", "CONNECT", "OPTIONS", "TRACE"}
+	if err != nil {
+		panic(err)
+	}
 
-	for _, method := range methods {
-		req, _ = http.NewRequest(method, "http://example.com/Patient", ioutil.NopCloser(bytes.NewReader(body)))
-		c.Request = req
-		testStatsDontChange(t, s, c, countyFp, cousubFp)
+	oldCounty := getCountyStatistics(da, countyFp)
+	oldCousub := getCousubStatistics(da, countyFp, cousubFp)
+
+	deleteInterceptor.After(patient)
+
+	newCounty := getCountyStatistics(da, countyFp)
+	newCousub := getCousubStatistics(da, countyFp, cousubFp)
+
+	// Test updated county statistics
+	assert.Equal(oldCounty.Population-1, newCounty.Population, "County population should decrement by 1")
+	assert.Equal(oldCounty.PopulationMale-1, newCounty.PopulationMale, "County male population should decrement by 1")
+	assert.Equal(oldCounty.PopulationFemale, newCounty.PopulationFemale, "County female population should not change")
+	newCountyPopPerSqMile := float64(oldCounty.Population-1) / 5.0
+	assert.Equal(newCountyPopPerSqMile, newCounty.PopulationPerSquareMile, "County population density should change with an decrease in population")
+
+	// Test updated cousub statistics
+	assert.Equal(oldCousub.Population-1, newCousub.Population, "Subdivision population should decrement by 1")
+	assert.Equal(oldCousub.PopulationMale-1, newCousub.PopulationMale, "Subdivision male population should decrement by 1")
+	assert.Equal(oldCousub.PopulationFemale, newCousub.PopulationFemale, "Subdivision female population should not change")
+	newCousubPopPerSqMile := float64(oldCousub.Population-1) / 5.0
+	assert.Equal(newCousubPopPerSqMile, newCousub.PopulationPerSquareMile, "Subdivision population density should change with an decrease in population")
+
+	// 8. Test a DeleteFemale operation
+	// ------------------------------------------------------------------------
+	patient.Gender = "female"
+
+	oldCounty = newCounty
+	oldCousub = newCousub
+
+	deleteInterceptor.After(patient)
+
+	newCounty = getCountyStatistics(da, countyFp)
+	newCousub = getCousubStatistics(da, countyFp, cousubFp)
+
+	// Test updated county statistics
+	assert.Equal(oldCounty.Population-1, newCounty.Population, "County population should decrement by 1")
+	assert.Equal(oldCounty.PopulationMale, newCounty.PopulationMale, "County male population should not change")
+	assert.Equal(oldCounty.PopulationFemale-1, newCounty.PopulationFemale, "County female population should decrement by 1")
+	newCountyPopPerSqMile = float64(oldCounty.Population-1) / 5.0
+	assert.Equal(newCountyPopPerSqMile, newCounty.PopulationPerSquareMile, "County population density should change with an decrease in population")
+
+	// Test updated cousub statistics
+	assert.Equal(oldCousub.Population-1, newCousub.Population, "Subdivision population should decrement by 1")
+	assert.Equal(oldCousub.PopulationMale, newCousub.PopulationMale, "Subdivision male population should not change")
+	assert.Equal(oldCousub.PopulationFemale-1, newCousub.PopulationFemale, "Subdivision female population should decrement by 1")
+	newCousubPopPerSqMile = float64(oldCousub.Population-1) / 5.0
+	assert.Equal(newCousubPopPerSqMile, newCousub.PopulationPerSquareMile, "Subdivision population density should change with an decrease in population")
+}
+
+// TestPatientStatsInterceptorErrorHandling tests that the interceptors and underlying
+// data access layers handle errors as expected
+func TestPatientStatsInterceptorErrorHandling(t *testing.T) {
+	// 9. Test an invalid gender (fails silently)
+	// ------------------------------------------------------------------------
+
+	// 10. Test a city that does not exist (fails silently)
+	// ------------------------------------------------------------------------
+}
+
+// testStatsDontChange is a reusable testing submodule that verifies no patient statistics have changed
+func testStatsDontChange(t *testing.T, oldCounty, newCounty CountyStats, oldCousub, newCousub CousubStats) {
+
+	// Test updated county statistics
+	assert.Equal(t, oldCounty.Population, newCounty.Population, "County population should not change")
+	assert.Equal(t, oldCounty.PopulationMale, newCounty.PopulationMale, "County male population should not change")
+	assert.Equal(t, oldCounty.PopulationFemale, newCounty.PopulationFemale, "County female population should not change")
+	assert.Equal(t, oldCounty.PopulationPerSquareMile, newCounty.PopulationPerSquareMile, "County population density should not change")
+
+	// Test updated cousub statistics
+	assert.Equal(t, oldCousub.Population, newCousub.Population, "Subdivision population should not change")
+	assert.Equal(t, oldCousub.PopulationMale, newCousub.PopulationMale, "Subdivision male population should not change")
+	assert.Equal(t, oldCousub.PopulationFemale, newCousub.PopulationFemale, "Subdivision female population should not change")
+	assert.Equal(t, oldCousub.PopulationPerSquareMile, newCousub.PopulationPerSquareMile, "Subdivision population density should not change")
+}
+
+// getCountyStatistics gets the county statistics that are currently in the database
+func getCountyStatistics(da *PatientStatsDataAccess, countyFp string) CountyStats {
+
+	county := CountyStats{
+		Population:              da.CountyStats.GetPopulation(countyFp),
+		PopulationMale:          da.CountyStats.GetMalePopulation(countyFp),
+		PopulationFemale:        da.CountyStats.GetFemalePopulation(countyFp),
+		PopulationPerSquareMile: da.CountyStats.GetPopulationPerSquareMile(countyFp),
+	}
+	return county
+}
+
+// getCousubStatistics gets the county subdivision statistics that are currently in the database
+func getCousubStatistics(da *PatientStatsDataAccess, countyFp, cousubFp string) CousubStats {
+
+	cousub := CousubStats{
+		Population:              da.CousubStats.GetPopulation(countyFp, cousubFp),
+		PopulationMale:          da.CousubStats.GetMalePopulation(countyFp, cousubFp),
+		PopulationFemale:        da.CousubStats.GetFemalePopulation(countyFp, cousubFp),
+		PopulationPerSquareMile: da.CousubStats.GetPopulationPerSquareMile(countyFp, cousubFp),
+	}
+	return cousub
+}
+
+// createNewPatientStatsDataAccess creates a minimally populated
+// PatientStatsDataAccess interface
+func createNewPatientStatsDataAccess() *PatientStatsDataAccess {
+
+	// Initialize county data
+	countyData := make(map[string]*TestSyntheticCountyStatsData)
+	countyData["025"] = &TestSyntheticCountyStatsData{ // 025 = Suffolk County
+		Pop:          100,
+		MalePop:      50,
+		FemalePop:    50,
+		SqMiles:      5.0,
+		PopPerSqMile: 20.0,
+	}
+	countyData["017"] = &TestSyntheticCountyStatsData{ // 017 = Middlesex County
+		Pop:          100,
+		MalePop:      50,
+		FemalePop:    50,
+		SqMiles:      5.0,
+		PopPerSqMile: 20.0,
+	}
+
+	// Initialize cousub data
+	cousubData := make(map[string]*TestSyntheticCountySubdivisionStatsData)
+	cousubData["07000"] = &TestSyntheticCountySubdivisionStatsData{ // 07000 = Boston
+		Pop:          100,
+		MalePop:      50,
+		FemalePop:    50,
+		SqMiles:      5.0,
+		PopPerSqMile: 20.0,
+	}
+	cousubData["04615"] = &TestSyntheticCountySubdivisionStatsData{ // 04615 = Bedford
+		Pop:          100,
+		MalePop:      50,
+		FemalePop:    50,
+		SqMiles:      5.0,
+		PopPerSqMile: 20.0,
+	}
+
+	return &PatientStatsDataAccess{
+		CountyStats: &TestSyntheticCountyStatsDataAccess{data: countyData},
+		CousubStats: &TestSyntheticCountySubdivisionStatsDataAccess{data: cousubData},
+		Cousub:      &TestCountySubdivisionDataAccess{},
 	}
 }
 
-// Reusable testing submodule that verifies no patient statistics have changed
-func testStatsDontChange(t *testing.T, s *PtStatsInterceptor, c *gin.Context, countyFp, cousubFp string) {
+// createNewPatient creates a minimally populated Patient object for testing
+func createNewPatient(city, gender string) *models.Patient {
 
-	oldCounty := getCountyStatistics(s, countyFp)
-    oldCousub := getCousubStatistics(s, countyFp, cousubFp)
+	address := models.Address{
+		City:  city,
+		State: "MA",
+	}
 
-	s.UpdatePatientStats(c)
-
-	// Test updated county statistics
-	assert.Equal(t, oldCounty.Population, s.SynthCountyStatsDA.GetPopulation(countyFp), "County population should not change")
-	assert.Equal(t, oldCounty.PopulationMale, s.SynthCountyStatsDA.GetMalePopulation(countyFp), "County male population should not change")
-	assert.Equal(t, oldCounty.PopulationFemale, s.SynthCountyStatsDA.GetFemalePopulation(countyFp), "County female population should not change")
-	assert.Equal(t, oldCounty.PopulationPerSquareMile, s.SynthCountyStatsDA.GetPopulationPerSquareMile(countyFp), "County population density should not change")
-
-	// Test updated cousub statistics
-	assert.Equal(t, oldCousub.Population, s.SynthCousubStatsDA.GetPopulation(countyFp, cousubFp), "Subdivision population should not change")
-	assert.Equal(t, oldCousub.PopulationMale, s.SynthCousubStatsDA.GetMalePopulation(countyFp, cousubFp), "Subdivision male population should not change")
-	assert.Equal(t, oldCousub.PopulationFemale, s.SynthCousubStatsDA.GetFemalePopulation(countyFp, cousubFp), "Subdivision female population should not change")
-	assert.Equal(t, oldCousub.PopulationPerSquareMile, s.SynthCousubStatsDA.GetPopulationPerSquareMile(countyFp, cousubFp), "Subdivision population density should not change")
-}
-
-// Gets the county statistics that are currently in the database
-func getCountyStatistics(s *PtStatsInterceptor, countyFp string) CountyStats {
-
-    county := CountyStats{
-        Population: s.SynthCountyStatsDA.GetPopulation(countyFp),
-        PopulationMale: s.SynthCountyStatsDA.GetMalePopulation(countyFp),
-        PopulationFemale: s.SynthCountyStatsDA.GetFemalePopulation(countyFp),
-        PopulationPerSquareMile: s.SynthCountyStatsDA.GetPopulationPerSquareMile(countyFp),
-    }
-    return county
-} 
-
-// Gets the county subdivision statistics that are currently in the database
-func getCousubStatistics(s *PtStatsInterceptor, countyFp, cousubFp string) CousubStats {
-
-    cousub := CousubStats{
-        Population: s.SynthCousubStatsDA.GetPopulation(countyFp, cousubFp),
-        PopulationMale: s.SynthCousubStatsDA.GetMalePopulation(countyFp, cousubFp),
-        PopulationFemale: s.SynthCousubStatsDA.GetFemalePopulation(countyFp, cousubFp),
-        PopulationPerSquareMile: s.SynthCousubStatsDA.GetPopulationPerSquareMile(countyFp, cousubFp),
-    }
-    return cousub
-}
-
-func buildPatientRequestObject(gender, city string) []byte {
-
-    var genderStr, cityStr string
-
-    bodyFormatStr := `
-    {
-        "resourceType":"Patient",
-        "id":"1295",
-        "birthDate":"2009-01-17",
-        %s
-        "address":[
-            {
-                "line":[
-                    "77254 Mafalda Estate",
-                    "Apt. 166"
-                ],
-                %s
-                "state":"MA",
-                "postalCode":"02163"
-            }
-        ]
-    }`
-    genderFormatStr := `"gender":"%s",`
-    cityFormatStr := `"city":"%s",`
-
-    if gender != "" {
-        genderStr = fmt.Sprintf(genderFormatStr, gender)
-    }
-
-    if city != "" {
-        cityStr = fmt.Sprintf(cityFormatStr, city)
-    }
-
-    return []byte(fmt.Sprintf(bodyFormatStr, genderStr, cityStr))
+	return &models.Patient{
+		Address: []models.Address{address},
+		Gender:  gender,
+	}
 }
