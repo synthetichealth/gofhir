@@ -38,9 +38,11 @@ func main() {
 	// setup the server
 	s := server.NewServer(*mongoHost)
 
-	// register interceptors
-	s.AddInterceptor(op, resourceType, handler)
-	s.AddInterceptor(op, resourceType, handler)
+	// register interceptors and data access
+	da := ptstats.NewPatientStatsDataAccess(db)
+	s.AddInterceptor("Create", "Patient", &ptstats.PatientStatsCreateInterceptor{DataAccess: da})
+	s.AddInterceptor("Update", "Patient", &ptstats.PatientStatsUpdateInterceptor{DataAccess: da})
+	s.AddInterceptor("Delete", "Patient", &ptstats.PatientStatsDeleteInterceptor{DataAccess: da})
 
 	// run the server
 	s.Run(server.Config{

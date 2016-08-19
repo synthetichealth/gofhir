@@ -9,7 +9,6 @@ package ptstats
 import (
 	"errors"
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"github.com/intervention-engine/fhir/models"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
@@ -247,99 +246,104 @@ func (da *PgSyntheticCountySubdivisionStatsDataAccess) modifyPopulationCount(cou
 }
 
 // PatientStatsDataAccess provides a common high-level interface to each of the
-// interceptor handlers for modify patient statistics in the Postgres database
+// interceptor handlers for modifying patient statistics in the Postgres database
 type PatientStatsDataAccess struct {
-	countyStats *PgSyntheticCountyStatsDataAccess
-	cousubStats *PgSyntheticCountySubdivisionStatsDataAccess
-	cousub      *PgCountySubdivisionDataAccess
-	cousubFp    string
-	countyFp    string
+	CountyStats SyntheticCountyStatsDataAccess
+	CousubStats SyntheticCountySubdivisionStatsDataAccess
+	Cousub      CountySubdivisionDataAccess
 }
 
-func (da *PatientStatsDataAccess) identifyCountyAndSubdivision(patient *models.Patient) error {
+// NewPatientStatsDataAccess creates a new patient stats data access interface
+// for use by one or more patient statistics interceptors
+func NewPatientStatsDataAccess(db *gorm.DB) *PatientStatsDataAccess {
+	return &PatientStatsDataAccess{
+		CountyStats: &PgSyntheticCountyStatsDataAccess{DB: db},
+		CousubStats: &PgSyntheticCountySubdivisionStatsDataAccess{DB: db},
+		Cousub:      &PgCountySubdivisionDataAccess{DB: db},
+	}
+}
+
+func (da *PatientStatsDataAccess) IdentifyCountyAndSubdivision(patient *models.Patient) (countyFp, cousubFp string, err error) {
 	city := patient.Address[0].City
 	if city == "" {
-		return errors.New("identifyCountyAndSubdivision: No city found in patient's address")
+		return "", "", errors.New("IdentifyCountyAndSubdivision: No city found in patient's address")
 	}
 
-	cousubFp := da.cousub.GetCountySubdivisionFp(city)
+	cousubFp = da.Cousub.GetCountySubdivisionFp(city)
 	if cousubFp == "00000" || cousubFp == "" {
-		return errors.New(fmt.Sprintf("identifyCountyAndSubdivision: City %s does not exist", city))
+		return "", "", errors.New(fmt.Sprintf("IdentifyCountyAndSubdivision: City %s does not exist", city))
 	}
 
-	da.cousubFp = cousubFp
-	da.countyFp = da.cousub.GetCountyFp(da.cousubFp)
-	return nil
+	countyFp = da.Cousub.GetCountyFp(cousubFp)
+	return countyFp, cousubFp, nil
 }
 
 func (da *PatientStatsDataAccess) AddMale(patient *models.Patient) error {
 
-	err := da.identifyCountyAndSubdivision(patient)
+	countyFp, cousubFp, err := da.IdentifyCountyAndSubdivision(patient)
 
 	if err != nil {
 		return err
 	}
 
-	switch patient.Gender {
-	case "male":
-		da.cousubStats.AddMale(da.countyFp, da.cousubFp)
-		da.countyStats.AddMale(da.countyFp)
+	if patient.Gender == "male" {
+		da.CousubStats.AddMale(countyFp, cousubFp)
+		da.CountyStats.AddMale(countyFp)
 		return nil
-	default:
+	} else {
 		return errors.New("AddMale: Patient is not a male")
 	}
 }
 
 func (da *PatientStatsDataAccess) AddFemale(patient *models.Patient) error {
 
-	err := da.identifyCountyAndSubdivision(patient)
+	countyFp, cousubFp, err := da.IdentifyCountyAndSubdivision(patient)
 
 	if err != nil {
 		return err
 	}
 
-	switch patient.Gender {
-	case "female":
-		da.cousubStats.AddFemale(da.countyFp, da.cousubFp)
-		da.countyStats.AddFemale(da.countyFp)
+	if patient.Gender == "female" {
+
+		da.CousubStats.AddFemale(countyFp, cousubFp)
+		da.CountyStats.AddFemale(countyFp)
 		return nil
-	default:
+	} else {
 		return errors.New("AddFemale: Patient is not a female")
 	}
 }
 
 func (da *PatientStatsDataAccess) RemoveMale(patient *models.Patient) error {
 
-	err := da.identifyCountyAndSubdivision(patient)
+	countyFp, cousubFp, err := da.IdentifyCountyAndSubdivision(patient)
 
 	if err != nil {
 		return err
 	}
 
-	switch patient.Gender {
-	case "male":
-		da.cousubStats.RemoveMale(da.countyFp, da.cousubFp)
-		da.countyStats.RemoveMale(da.countyFp)
+	if patient.Gender == "male" {
+		da.CousubStats.RemoveMale(countyFp, cousubFp)
+		da.CountyStats.RemoveMale(countyFp)
 		return nil
-	default:
+	} else {
 		return errors.New("RemoveMale: Patient is not a male")
 	}
 }
 
 func (da *PatientStatsDataAccess) RemoveFemale(patient *models.Patient) error {
 
-	err := da.identifyCountyAndSubdivision(patient)
+	countyFp, cousubFp, err := da.IdentifyCountyAndSubdivision(patient)
 
 	if err != nil {
 		return err
 	}
 
-	switch patient.Gender {
-	case "female":
-		da.cousubStats.RemoveFemale(da.countyFp, da.cousubFp)
-		da.countyStats.RemoveFemale(da.countyFp)
+	if patient.Gender == "female" {
+
+		da.CousubStats.RemoveFemale(countyFp, cousubFp)
+		da.CountyStats.RemoveFemale(countyFp)
 		return nil
-	default:
+	} else {
 		return errors.New("RemoveFemale: Patient is not a female")
 	}
 }
@@ -352,16 +356,21 @@ type PatientStatsCreateInterceptor struct {
 
 func (s *PatientStatsCreateInterceptor) After(resource interface{}) {
 	patient, ok := resource.(*models.Patient)
+	var err error
 
 	if ok {
 		gender := patient.Gender
 		switch gender {
 		case "male":
-			s.DataAccess.AddMale(patient)
+			err = s.DataAccess.AddMale(patient)
 		case "female":
-			s.DataAccess.AddFemale(patient)
+			err = s.DataAccess.AddFemale(patient)
 		default:
-			log.Printf("PatientStatsCreateInterceptor: invalid gender for patient %s\n", patient.Id)
+			log.Printf("PatientStatsCreateInterceptor: Invalid gender for patient %s\n", patient.Id)
+		}
+
+		if err != nil {
+			log.Printf("PatientStatsCreateInterceptor: Failed to add statistics for patient %s\n", patient.Id)
 		}
 	}
 }
@@ -375,7 +384,9 @@ func (s *PatientStatsCreateInterceptor) OnError(err error, resource interface{})
 type PatientStatsUpdateInterceptor struct {
 	DataAccess *PatientStatsDataAccess
 	// The state of the patient before the database update, for comparison after the database update
-	patientBefore models.Patient
+	patientBefore *models.Patient
+	// Tracks if the interceptor failed to cache the patient model before the update
+	cacheError error
 }
 
 func (s *PatientStatsUpdateInterceptor) Before(resource interface{}) {
@@ -383,17 +394,35 @@ func (s *PatientStatsUpdateInterceptor) Before(resource interface{}) {
 
 	if ok {
 		s.patientBefore = patient
+	} else {
+		errmsg := "PatientStatsUpdateInterceptor:Before: Failed to cache patient before update\n"
+		s.cacheError = errors.New(errmsg)
+		log.Printf(errmsg)
 	}
 }
 
 func (s *PatientStatsUpdateInterceptor) After(resource interface{}) {
-	patientAfter := resource.(*models.Patient)
+	patientAfter, ok := resource.(*models.Patient)
+	var removeErr, addErr error
 
-	if ok {
-		// see if patient gender changed, and update stats
-		if s.patientBefore.Gender == "male" && patientAfter.Gender == "female" {
-			s.DataAccess.RemoveMale(s.patientBefore)
-			s.DataAccess.AddFemale(patientAfter)
+	if ok && s.cacheError == nil {
+		// see if the patient's address (or at least, his/her city) changed, and update stats
+		if s.patientBefore.Address[0].City != "" && s.patientBefore.Address[0].City != patientAfter.Address[0].City {
+
+			switch patientAfter.Gender {
+			case "male":
+				removeErr = s.DataAccess.RemoveMale(s.patientBefore)
+				addErr = s.DataAccess.AddMale(patientAfter)
+			case "female":
+				removeErr = s.DataAccess.RemoveFemale(s.patientBefore)
+				addErr = s.DataAccess.AddFemale(patientAfter)
+			default:
+				log.Printf("PatientStatsUpdateInterceptor: Invalid gender for patient %s\n", patientAfter.Id)
+			}
+		}
+
+		if removeErr != nil || addErr != nil {
+			log.Printf("PatientStatsUpdateInterceptor: Failed to update statistics for patient %s\n", patientAfter.Id)
 		}
 	}
 }
@@ -408,18 +437,25 @@ type PatientStatsDeleteInterceptor struct {
 }
 
 func (s *PatientStatsDeleteInterceptor) After(resource interface{}) {
+	patient, ok := resource.(*models.Patient)
+	var err error
+
 	if ok {
-		gender := patient.Gender
-		switch gender {
+		switch patient.Gender {
 		case "male":
-			s.DataAccess.RemoveMale(patient)
+			err = s.DataAccess.RemoveMale(patient)
 		case "female":
-			s.DataAccess.RemoveFemale(patient)
+			err = s.DataAccess.RemoveFemale(patient)
 		default:
-			log.Printf("PatientStatsCreateInterceptor: invalid gender for patient %s\n", patient.Id)
+			log.Printf("PatientStatsDeleteInterceptor: Invalid gender for patient %s\n", patient.Id)
+		}
+
+		if err != nil {
+			log.Printf("PatientStatsDeleteInterceptor: Failed to remove statistics for patient %s\n", patient.Id)
 		}
 	}
 }
 
+// unused interceptor handlers:
 func (s *PatientStatsDeleteInterceptor) Before(resource interface{})             {}
 func (s *PatientStatsDeleteInterceptor) OnError(err error, resource interface{}) {}
