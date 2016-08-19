@@ -91,7 +91,7 @@ To remove the development database, from the `postgres/` folder run `pgcleanup.s
 $ cd $GOPATH/src/github.com/synthetichealth/gofhir/postgres/
 $ ./pgcleanup.sh
 ```
-You may need to make `pgsetup.sh` an executable by running:
+You may need to make `pgcleanup.sh` an executable by running:
 
 ```
 $ chmod +x pgcleanup.sh
