@@ -95,4 +95,11 @@ cat $PWD/data/county.csv | psql -d fhir_test -c "\COPY tiger.county (gid, statef
 #  FROM tiger_cb14_500k.cousub WHERE statefp = '25';
 cat $PWD/data/cousub.csv | psql -d fhir_test -c "\COPY tiger.cousub (gid, statefp, countyfp, cousubfp, cousubns, cosbidfp, name, lsad, aland, awater, the_geom) FROM STDIN (DELIMITER ',', QUOTE '\"', HEADER TRUE, FORMAT CSV)"
 
+
+# cleanup after database creation and population
+psql -d fhir_test <<EOF
+VACUUM ANALYZE tiger.county;
+VACUUM ANALYZE tiger.cousub;
+EOF
+
 echo "fhir_test database created"
