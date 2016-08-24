@@ -40,45 +40,58 @@ GRANT SELECT ON TABLE tiger.cousub TO public;
 -- Create disease table
 CREATE SEQUENCE disease_id_seq;
 CREATE TABLE synth_ma.synth_disease (
-    diseasefp smallint NOT NULL DEFAULT nextval('disease_id_seq'),
+    diseasefp integer NOT NULL DEFAULT nextval('disease_id_seq'),
     stat_name character varying(100),
     condition_name character varying(100),
     code_icd9 character varying(6),
     code_icd10 character varying(6),
-    code_snomed character varying(8)
+    code_snomed character varying(8),
+    CONSTRAINT pk_diseasefp PRIMARY KEY (diseasefp)
 )
-
 WITH (
     OIDS=FALSE
 );
+
 ALTER SEQUENCE disease_id_seq OWNER TO fhir_test;
 ALTER TABLE synth_ma.synth_disease OWNER TO fhir_test;
 
 -- Create county fact table
+CREATE SEQUENCE county_factid_seq;
 CREATE TABLE synth_ma.synth_county_facts (
+    factid integer NOT NULL DEFAULT nextval('county_factid_seq'),
     cntyidfp character varying(5) NOT NULL,
-    diseasefp smallint NOT NULL,
+    diseasefp integer NOT NULL,
     pop numeric,
     pop_male numeric,
-    pop_female numeric
+    pop_female numeric,
+    CONSTRAINT pk_county_factid PRIMARY KEY (factid)
 )
 WITH (
     OIDS=FALSE
 );
+
+ALTER SEQUENCE county_factid_seq OWNER TO fhir_test;
 ALTER TABLE synth_ma.synth_county_facts OWNER TO fhir_test;
+CREATE UNIQUE INDEX county_facts_uidx ON synth_ma.synth_county_facts (cntyidfp, diseasefp);
 
 -- Create county subdivision fact table
+CREATE SEQUENCE cousub_factid_seq;
 CREATE TABLE synth_ma.synth_cousub_facts (
-    cosbid character varying(10) NOT NULL,
-    diseasefp smallint NOT NULL,
+    factid integer NOT NULL DEFAULT nextval('cousub_factid_seq'),
+    cosbidfp character varying(10) NOT NULL,
+    diseasefp integer NOT NULL,
     pop numeric,
     pop_male numeric,
-    pop_female numeric
+    pop_female numeric,
+    CONSTRAINT pk_cousub_factid PRIMARY KEY (factid)
 )
 WITH (
     OIDS=FALSE
 );
+
+ALTER SEQUENCE cousub_factid_seq OWNER TO fhir_test;
 ALTER TABLE synth_ma.synth_cousub_facts OWNER TO fhir_test;
+CREATE UNIQUE INDEX cousub_facts_uidx ON synth_ma.synth_cousub_facts (cosbidfp, diseasefp);
 EOF
 
 # County Tiger Data
@@ -95,11 +108,32 @@ cat $PWD/data/county.csv | psql -d fhir_test -c "\COPY tiger.county (gid, statef
 #  FROM tiger_cb14_500k.cousub WHERE statefp = '25';
 cat $PWD/data/cousub.csv | psql -d fhir_test -c "\COPY tiger.cousub (gid, statefp, countyfp, cousubfp, cousubns, cosbidfp, name, lsad, aland, awater, the_geom) FROM STDIN (DELIMITER ',', QUOTE '\"', HEADER TRUE, FORMAT CSV)"
 
+# Disease Data
+cat $PWD/data/disease.csv | psql -d fhir_test -c "\COPY synth_ma.synth_disease (diseasefp, stat_name, condition_name, code_icd9, code_icd10, code_snomed) FROM STDIN (DELIMITER ',', QUOTE '\"', HEADER TRUE, FORMAT CSV)"
+
+# Populate the fact tables with zeroed stats data.
+# This is every permutation of county/cousub ID and disease ID.
+psql -d fhir_test <<EOF
+-- Populate the county fact table
+INSERT INTO synth_ma.synth_county_facts(cntyidfp, diseasefp, pop, pop_male, pop_female)
+SELECT c.cntyidfp, d.diseasefp, 0, 0, 0
+FROM tiger.county AS c 
+CROSS JOIN synth_ma.synth_disease AS d;
+
+-- Populate the cousub fact table
+INSERT INTO synth_ma.synth_cousub_facts(cosbidfp, diseasefp, pop, pop_male, pop_female)
+SELECT c.cosbidfp, d.diseasefp, 0, 0, 0
+FROM tiger.cousub AS c 
+CROSS JOIN synth_ma.synth_disease AS d;
+EOF
 
 # cleanup after database creation and population
 psql -d fhir_test <<EOF
 VACUUM ANALYZE tiger.county;
 VACUUM ANALYZE tiger.cousub;
+VACUUM ANALYZE synth_ma.synth_disease;
+VACUUM ANALYZE synth_ma.synth_county_facts;
+VACUUM ANALYZE synth_ma.synth_cousub_facts;
 EOF
 
 echo "fhir_test database created"
