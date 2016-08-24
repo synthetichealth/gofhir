@@ -67,9 +67,12 @@ This creates a local database `fhir_test` with a `fhir_test` user, adds the need
 
 The following tables are relevant for Synthetic Mass statistics:
 
-- `synth_ma.synth_county_stats` - synthetic patient statistics by county
-- `synth_ma.synth_cousub_stats` - synthetic patient statistics by county subdivison (city/town)
-- `tiger.cousub` - county subdivision information
+- `synth_ma.synth_disease` - diseases we currently track statistics for
+- `synth_ma.synth_county_facts` - synthetic patient statistics by county and disease
+- `synth_ma.synth_cousub_facts` - synthetic patient statistics by subdivison (city/town) and disease
+- `tiger.county` - county information, including geo data
+- `tiger.cousub` - county subdivision information, including geo data
+
 
 All of this data is **for Massachusetts only**.
 
