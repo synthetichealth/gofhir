@@ -37,12 +37,48 @@ GRANT USAGE ON SCHEMA tiger TO public;
 GRANT SELECT ON TABLE tiger.county TO public;
 GRANT SELECT ON TABLE tiger.cousub TO public;
 
+-- Synthetic county statistics
+CREATE TABLE synth_ma.synth_county_stats (
+    ct_name character varying(100),
+    ct_fips character varying(3) NOT NULL,
+    sq_mi double precision,
+    pop numeric,
+    pop_male numeric,
+    pop_female numeric,
+    pop_sm double precision,
+    ct_poly public.geometry(MultiPolygon,4269),
+    ct_pnt public.geometry
+)
+WITH (
+    OIDS=FALSE
+);
+ALTER TABLE synth_ma.synth_county_stats OWNER TO fhir_test;
+
+-- Synthetic county subdivison statistics
+CREATE TABLE synth_ma.synth_cousub_stats (
+    ct_name character varying(100),
+    ct_fips character varying(3) NOT NULL,
+    cs_name character varying(100),
+    cs_fips character varying(5) NOT NULL,
+    sq_mi double precision,
+    pop numeric,
+    pop_male numeric,
+    pop_female numeric,
+    pop_sm double precision,
+    cs_poly public.geometry(MultiPolygon,4269),
+    cs_pnt public.geometry
+)
+WITH (
+    OIDS=FALSE
+);
+ALTER TABLE synth_ma.synth_cousub_stats OWNER TO fhir_test;
+
 -- Create disease table
 CREATE SEQUENCE disease_id_seq;
 CREATE TABLE synth_ma.synth_disease (
     diseasefp integer NOT NULL DEFAULT nextval('disease_id_seq'),
     stat_name character varying(100),
-    condition_name character varying(100),
+    condition_name character varying(100) UNIQUE,
     code_icd9 character varying(6),
     code_icd10 character varying(6),
     code_snomed character varying(8),
@@ -108,6 +144,12 @@ cat $PWD/data/county.csv | psql -d fhir_test -c "\COPY tiger.county (gid, statef
 #  FROM tiger_cb14_500k.cousub WHERE statefp = '25';
 cat $PWD/data/cousub.csv | psql -d fhir_test -c "\COPY tiger.cousub (gid, statefp, countyfp, cousubfp, cousubns, cosbidfp, name, lsad, aland, awater, the_geom) FROM STDIN (DELIMITER ',', QUOTE '\"', HEADER TRUE, FORMAT CSV)"
 
+# Synthetic County Statistics
+cat $PWD/data/synth_county_stats.csv | psql -d fhir_test -c "\COPY synth_ma.synth_county_stats (ct_name, ct_fips, sq_mi, pop, pop_male, pop_female, pop_sm, ct_poly, ct_pnt) FROM STDIN (DELIMITER ',', QUOTE '\"', HEADER TRUE, FORMAT CSV)"
+
+# Synthetic Subdivision Statistics
+cat $PWD/data/synth_cousub_stats.csv | psql -d fhir_test -c "\COPY synth_ma.synth_cousub_stats (ct_name, ct_fips, cs_name, cs_fips, sq_mi, pop, pop_male, pop_female, pop_sm, cs_poly, cs_pnt) FROM STDIN (DELIMITER ',', QUOTE '\"', HEADER TRUE, FORMAT CSV)"
+
 # Disease Data
 cat $PWD/data/disease.csv | psql -d fhir_test -c "\COPY synth_ma.synth_disease (diseasefp, stat_name, condition_name, code_icd9, code_icd10, code_snomed) FROM STDIN (DELIMITER ',', QUOTE '\"', HEADER TRUE, FORMAT CSV)"
 
@@ -131,6 +173,8 @@ EOF
 psql -d fhir_test <<EOF
 VACUUM ANALYZE tiger.county;
 VACUUM ANALYZE tiger.cousub;
+VACUUM ANALYZE synth_ma.synth_county_stats;
+VACUUM ANALYZE synth_ma.synth_cousub_stats;
 VACUUM ANALYZE synth_ma.synth_disease;
 VACUUM ANALYZE synth_ma.synth_county_facts;
 VACUUM ANALYZE synth_ma.synth_cousub_facts;
