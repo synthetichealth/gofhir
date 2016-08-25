@@ -49,7 +49,7 @@ func (SyntheticDisease) TableName() string {
 
 // SyntheticCountyStat is a set of statistics for a given county.
 type SyntheticCountyStat struct {
-	Name                    string  `gorm:"column:ct_name"`
+	CountyName              string  `gorm:"column:ct_name"`
 	CountyFp                string  `gorm:"column:ct_fips;primary_key"`
 	SquareMiles             float64 `gorm:"column:sq_mi"`
 	Population              int64   `gorm:"column:pop"`
@@ -64,7 +64,7 @@ func (SyntheticCountyStat) TableName() string {
 
 // SyntheticSubdivisionStat is a set of statistics for a given subdivision.
 type SyntheticSubdivisionStat struct {
-	Name                    string  `gorm:"column:cs_name"`
+	SubdivisionName         string  `gorm:"column:cs_name"`
 	CountyFp                string  `gorm:"column:ct_fips;primary_key"`
 	CousubFp                string  `gorm:"column:cs_fips;primary_key"`
 	SquareMiles             float64 `gorm:"column:sq_mi"`
@@ -80,12 +80,12 @@ func (SyntheticSubdivisionStat) TableName() string {
 
 // SyntheticCountyFact is a set of statistics on a particular disease in a particular county.
 type SyntheticCountyFact struct {
-	Id                 string `gorm:"column:factid;primary_key"`
-	CountyIdFp         string `gorm:"column:cntyidfp"`
-	SyntheticDiseaseId string `gorm:"column:diseasefp"`
-	Population         int64  `gorm:"column:pop"`
-	PopulationMale     int64  `gorm:"column:pop_male"`
-	PopulationFemale   int64  `gorm:"column:pop_female"`
+	Id               string `gorm:"column:factid;primary_key"`
+	CountyIdFp       string `gorm:"column:cntyidfp"`
+	DiseaseId        string `gorm:"column:diseasefp"`
+	Population       int64  `gorm:"column:pop"`
+	PopulationMale   int64  `gorm:"column:pop_male"`
+	PopulationFemale int64  `gorm:"column:pop_female"`
 }
 
 func (SyntheticCountyFact) TableName() string {
@@ -94,12 +94,12 @@ func (SyntheticCountyFact) TableName() string {
 
 // CountySyntheticSubdivisionFact is a set of statistics on a particular disease in a particular county subdivision.
 type SyntheticSubdivisionFact struct {
-	Id                 string `gorm:"column:factid;primary_key"`
-	CosbidFp           string `gorm:"column:cosbidfp"`
-	SyntheticDiseaseId string `gorm:"column:diseasefp"`
-	Population         int64  `gorm:"column:pop"`
-	PopulationMale     int64  `gorm:"column:pop_male"`
-	PopulationFemale   int64  `gorm:"column:pop_female"`
+	Id               string `gorm:"column:factid;primary_key"`
+	CosbidFp         string `gorm:"column:cosbidfp"`
+	DiseaseId        string `gorm:"column:diseasefp"`
+	Population       int64  `gorm:"column:pop"`
+	PopulationMale   int64  `gorm:"column:pop_male"`
+	PopulationFemale int64  `gorm:"column:pop_female"`
 }
 
 func (SyntheticSubdivisionFact) TableName() string {
@@ -295,7 +295,7 @@ func (da *PgSyntheticCountyFactDataAccess) GetFactByCountyAndCondition(county Co
 	var disease SyntheticDisease
 	var fact SyntheticCountyFact
 	da.DB.Where(&SyntheticDisease{ConditionName: conditionName}).First(&disease)
-	da.DB.Where(&SyntheticCountyFact{CountyIdFp: county.CountyIdFp, SyntheticDiseaseId: disease.Id}).First(&fact)
+	da.DB.Where(&SyntheticCountyFact{CountyIdFp: county.CountyIdFp, DiseaseId: disease.Id}).First(&fact)
 	return fact
 }
 
@@ -337,7 +337,7 @@ func (da *PgSyntheticSubdivisionFactDataAccess) GetFactBySubdivisionAndCondition
 	var disease SyntheticDisease
 	var fact SyntheticSubdivisionFact
 	da.DB.Where(&SyntheticDisease{ConditionName: conditionName}).First(&disease)
-	da.DB.Where(&SyntheticSubdivisionFact{CosbidFp: cousub.CosbidFp, SyntheticDiseaseId: disease.Id}).First(&fact)
+	da.DB.Where(&SyntheticSubdivisionFact{CosbidFp: cousub.CosbidFp, DiseaseId: disease.Id}).First(&fact)
 	return fact
 }
 
@@ -370,8 +370,8 @@ func (da *PgSyntheticSubdivisionFactDataAccess) RemoveFemaleFromFact(fact Synthe
 	da.DB.Model(&fact).UpdateColumns(SyntheticSubdivisionFact{Population: fact.Population, PopulationFemale: fact.PopulationFemale})
 }
 
-// getSyntheticDiseaseIds returns a slice of disease IDs from a slice of diseases
-func getSyntheticDiseaseIds(diseases []SyntheticDisease) []string {
+// getDiseaseIds returns a slice of disease IDs from a slice of diseases
+func getDiseaseIds(diseases []SyntheticDisease) []string {
 	diseaseIds := make([]string, len(diseases))
 	for i, disease := range diseases {
 		diseaseIds[i] = disease.Id
