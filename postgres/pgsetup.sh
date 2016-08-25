@@ -100,6 +100,7 @@ CREATE TABLE synth_ma.synth_county_facts (
     pop numeric,
     pop_male numeric,
     pop_female numeric,
+    rate double precision,
     CONSTRAINT pk_county_factid PRIMARY KEY (factid)
 )
 WITH (
@@ -119,6 +120,7 @@ CREATE TABLE synth_ma.synth_cousub_facts (
     pop numeric,
     pop_male numeric,
     pop_female numeric,
+    rate double precision,
     CONSTRAINT pk_cousub_factid PRIMARY KEY (factid)
 )
 WITH (
