@@ -159,14 +159,14 @@ cat $PWD/data/disease.csv | psql -d fhir_test -c "\COPY synth_ma.synth_disease (
 # This is every permutation of county/cousub ID and disease ID.
 psql -d fhir_test <<EOF
 -- Populate the county fact table
-INSERT INTO synth_ma.synth_county_facts(cntyidfp, diseasefp, pop, pop_male, pop_female)
-SELECT c.cntyidfp, d.diseasefp, 0, 0, 0
+INSERT INTO synth_ma.synth_county_facts(cntyidfp, diseasefp, pop, pop_male, pop_female, rate)
+SELECT c.cntyidfp, d.diseasefp, 0, 0, 0, 0
 FROM tiger.county AS c 
 CROSS JOIN synth_ma.synth_disease AS d;
 
 -- Populate the cousub fact table
-INSERT INTO synth_ma.synth_cousub_facts(cosbidfp, diseasefp, pop, pop_male, pop_female)
-SELECT c.cosbidfp, d.diseasefp, 0, 0, 0
+INSERT INTO synth_ma.synth_cousub_facts(cosbidfp, diseasefp, pop, pop_male, pop_female, rate)
+SELECT c.cosbidfp, d.diseasefp, 0, 0, 0, 0
 FROM tiger.cousub AS c 
 CROSS JOIN synth_ma.synth_disease AS d;
 EOF
