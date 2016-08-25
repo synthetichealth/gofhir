@@ -2,14 +2,11 @@ package main
 
 import (
 	"flag"
-	"log"
-
-	"github.com/synthetichealth/gofhir/ptstats"
-
 	"github.com/intervention-engine/fhir/server"
-
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
+	"github.com/synthetichealth/gofhir/stats"
+	"log"
 )
 
 func main() {
@@ -34,16 +31,16 @@ func main() {
 	if err := db.DB().Ping(); err != nil {
 		log.Fatal(err)
 	}
-	// configure the stat interceptor
-	ptStatsInterceptor := &ptstats.PtStatsInterceptor{
-		CousubDA:           &ptstats.PgCountySubdivisionDataAccess{DB: db},
-		SynthCountyStatsDA: &ptstats.PgSyntheticCountyStatsDataAccess{DB: db},
-		SynthCousubStatsDA: &ptstats.PgSyntheticCountySubdivisionStatsDataAccess{DB: db},
-	}
+	da := stats.NewPgStatsDataAccess(db)
 
 	// setup and run the server
 	s := server.NewServer(*mongoHost)
-	s.Engine.Use(ptStatsInterceptor.Handler)
+
+	// register interceptors
+	s.AddInterceptor("Create", "Patient", &stats.PatientStatsCreateInterceptor{DataAccess: da})
+	s.AddInterceptor("Update", "Patient", &stats.PatientStatsUpdateInterceptor{DataAccess: da})
+	s.AddInterceptor("Delete", "Patient", &stats.PatientStatsDeleteInterceptor{DataAccess: da})
+
 	s.Run(server.Config{
 		UseSmartAuth:         false,
 		UseLoggingMiddleware: false,
