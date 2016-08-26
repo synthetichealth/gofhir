@@ -257,15 +257,13 @@ func (s *StatTestSuite) TestSyntheticSubdivisionFactDataAccess(c *C) {
 	assertSubdivisionFactChanged(c, fact, ufact, 0, -1)
 }
 
-func (s *StatTestSuite) TestTopLevelDataAccess(c *C) {
+func (s *StatTestSuite) TestTopLevelPatientDataAccess(c *C) {
 
-	var county County
-	var cousub Subdivision
 	var countyStat, ucountyStat SyntheticCountyStat
 	var cousubStat, ucousubStat SyntheticSubdivisionStat
 
 	// Create patient for testing
-	patient := models.Patient{
+	patient := &models.Patient{
 		Gender: "male",
 		Address: []models.Address{
 			models.Address{
@@ -276,13 +274,12 @@ func (s *StatTestSuite) TestTopLevelDataAccess(c *C) {
 		},
 	}
 
-	cousub = s.DAL.Subdivisions.GetSubdivisionByName(patient.Address[0].City)
-	county = s.DAL.Counties.GetCountyById(cousub.CountyFp)
+	county, cousub := s.DAL.GetCountyAndSubdivisionForPatient(patient)
 	cousubStat = s.DAL.SyntheticSubdivisionStats.GetStatBySubdivision(cousub)
 	countyStat = s.DAL.SyntheticCountyStats.GetStatByCounty(county)
 
 	// Add a male patient
-	s.DAL.AddMalePatient(&patient)
+	s.DAL.AddMalePatient(patient)
 	ucousubStat = s.DAL.SyntheticSubdivisionStats.GetStatBySubdivision(cousub)
 	ucountyStat = s.DAL.SyntheticCountyStats.GetStatByCounty(county)
 
@@ -294,7 +291,7 @@ func (s *StatTestSuite) TestTopLevelDataAccess(c *C) {
 	patient.Gender = "female"
 	countyStat = ucountyStat
 	cousubStat = ucousubStat
-	s.DAL.AddFemalePatient(&patient)
+	s.DAL.AddFemalePatient(patient)
 	ucousubStat = s.DAL.SyntheticSubdivisionStats.GetStatBySubdivision(cousub)
 	ucountyStat = s.DAL.SyntheticCountyStats.GetStatByCounty(county)
 	assertCountyStatChanged(c, countyStat, ucountyStat, 0, 1)
@@ -303,7 +300,7 @@ func (s *StatTestSuite) TestTopLevelDataAccess(c *C) {
 	// Remove a female patient
 	countyStat = ucountyStat
 	cousubStat = ucousubStat
-	s.DAL.RemoveFemalePatient(&patient)
+	s.DAL.RemoveFemalePatient(patient)
 	ucousubStat = s.DAL.SyntheticSubdivisionStats.GetStatBySubdivision(cousub)
 	ucountyStat = s.DAL.SyntheticCountyStats.GetStatByCounty(county)
 	assertCountyStatChanged(c, countyStat, ucountyStat, 0, -1)
@@ -313,11 +310,80 @@ func (s *StatTestSuite) TestTopLevelDataAccess(c *C) {
 	patient.Gender = "male"
 	countyStat = ucountyStat
 	cousubStat = ucousubStat
-	s.DAL.RemoveMalePatient(&patient)
+	s.DAL.RemoveMalePatient(patient)
 	ucousubStat = s.DAL.SyntheticSubdivisionStats.GetStatBySubdivision(cousub)
 	ucountyStat = s.DAL.SyntheticCountyStats.GetStatByCounty(county)
 	assertCountyStatChanged(c, countyStat, ucountyStat, -1, 0)
 	assertSubdivisionStatChanged(c, cousubStat, ucousubStat, -1, 0)
+}
+
+func (s *StatTestSuite) TestTopLevelConditionDataAcess(c *C) {
+
+	var countyFact, ucountyFact SyntheticCountyFact
+	var cousubFact, ucousubFact SyntheticSubdivisionFact
+
+	patient := &models.Patient{
+		Gender: "male",
+		Address: []models.Address{
+			models.Address{
+				City:       "Marblehead",
+				State:      "MA",
+				PostalCode: "01945",
+			},
+		},
+	}
+
+	condition := &models.Condition{
+		Code: &models.CodeableConcept{
+			Coding: []models.Coding{
+				models.Coding{
+					Code:   "44054006",
+					System: SnomedCodeSystem,
+				},
+			},
+		},
+	}
+
+	county, cousub := s.DAL.GetCountyAndSubdivisionForPatient(patient)
+	conditionName := s.DAL.GetConditionName(condition)
+	countyFact = s.DAL.SyntheticCountyFacts.GetFactByCountyAndCondition(county, conditionName)
+	cousubFact = s.DAL.SyntheticSubdivisionFacts.GetFactBySubdivisionAndCondition(cousub, conditionName)
+
+	// Add a male condition
+	s.DAL.AddMaleCondition(patient, condition)
+	ucountyFact = s.DAL.SyntheticCountyFacts.GetFactByCountyAndCondition(county, conditionName)
+	ucousubFact = s.DAL.SyntheticSubdivisionFacts.GetFactBySubdivisionAndCondition(cousub, conditionName)
+	assertCountyFactChanged(c, countyFact, ucountyFact, 1, 0)
+	assertSubdivisionFactChanged(c, cousubFact, ucousubFact, 1, 0)
+
+	// Add a female condition
+	countyFact = ucountyFact
+	cousubFact = ucousubFact
+	patient.Gender = "female"
+	s.DAL.AddFemaleCondition(patient, condition)
+	ucountyFact = s.DAL.SyntheticCountyFacts.GetFactByCountyAndCondition(county, conditionName)
+	ucousubFact = s.DAL.SyntheticSubdivisionFacts.GetFactBySubdivisionAndCondition(cousub, conditionName)
+	assertCountyFactChanged(c, countyFact, ucountyFact, 0, 1)
+	assertSubdivisionFactChanged(c, cousubFact, ucousubFact, 0, 1)
+
+	// Remove a female condition
+	countyFact = ucountyFact
+	cousubFact = ucousubFact
+	s.DAL.RemoveFemaleCondition(patient, condition)
+	ucountyFact = s.DAL.SyntheticCountyFacts.GetFactByCountyAndCondition(county, conditionName)
+	ucousubFact = s.DAL.SyntheticSubdivisionFacts.GetFactBySubdivisionAndCondition(cousub, conditionName)
+	assertCountyFactChanged(c, countyFact, ucountyFact, 0, -1)
+	assertSubdivisionFactChanged(c, cousubFact, ucousubFact, 0, -1)
+
+	// Remove a male condition
+	countyFact = ucountyFact
+	cousubFact = ucousubFact
+	patient.Gender = "male"
+	s.DAL.RemoveMaleCondition(patient, condition)
+	ucountyFact = s.DAL.SyntheticCountyFacts.GetFactByCountyAndCondition(county, conditionName)
+	ucousubFact = s.DAL.SyntheticSubdivisionFacts.GetFactBySubdivisionAndCondition(cousub, conditionName)
+	assertCountyFactChanged(c, countyFact, ucountyFact, -1, 0)
+	assertSubdivisionFactChanged(c, cousubFact, ucousubFact, -1, 0)
 }
 
 func assertCountyStatChanged(c *C, stat, ustat SyntheticCountyStat, maleDelta, femaleDelta int64) {

@@ -6,6 +6,9 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 )
 
+// Condition coding systems
+const SnomedCodeSystem = "http://snomed.info/sct"
+
 // County is a county in the United States of America.
 type County struct {
 	CountyIdFp string `gorm:"column:cntyidfp;primary_key"`
@@ -121,6 +124,7 @@ type SubdivisionDataAccess interface {
 // SyntheticDiseaseDataAccess is an interface for interacting with the SyntheticDisease data object.
 type SyntheticDiseaseDataAccess interface {
 	GetSyntheticDiseaseByCondition(conditionName string) SyntheticDisease
+	GetSyntheticDiseaseBySnomedCode(snomedCode string) SyntheticDisease
 }
 
 // SyntheticCountyStatDataAccess is an interface for interacting with the SyntheticCountyStat data object.
@@ -202,6 +206,13 @@ type PgSyntheticDiseaseDataAccess struct {
 func (da *PgSyntheticDiseaseDataAccess) GetSyntheticDiseaseByCondition(conditionName string) SyntheticDisease {
 	var disease SyntheticDisease
 	da.DB.Where(&SyntheticDisease{ConditionName: conditionName}).First(&disease)
+	return disease
+}
+
+// GetSyntheticDiseaseBySnomedCode returns a disease that matches the given SNOMED code (e.g. '44054006').
+func (da *PgSyntheticDiseaseDataAccess) GetSyntheticDiseaseBySnomedCode(snomedCode string) SyntheticDisease {
+	var disease SyntheticDisease
+	da.DB.Where(&SyntheticDisease{SnomedCode: snomedCode}).First(&disease)
 	return disease
 }
 
@@ -416,7 +427,7 @@ type StatsDataAccess struct {
 
 // AddMale increments the male and total population counts for the patient's county and subdivision
 func (da *StatsDataAccess) AddMalePatient(patient *models.Patient) {
-	county, cousub := da.getCountyAndSubdivisionForPatient(patient)
+	county, cousub := da.GetCountyAndSubdivisionForPatient(patient)
 	countyStat := da.SyntheticCountyStats.GetStatByCounty(county)
 	cousubStat := da.SyntheticSubdivisionStats.GetStatBySubdivision(cousub)
 	da.SyntheticCountyStats.AddMaleToStat(countyStat)
@@ -425,7 +436,7 @@ func (da *StatsDataAccess) AddMalePatient(patient *models.Patient) {
 
 // AddFemale increments the female and total population counts for the patient's county and subdivision
 func (da *StatsDataAccess) AddFemalePatient(patient *models.Patient) {
-	county, cousub := da.getCountyAndSubdivisionForPatient(patient)
+	county, cousub := da.GetCountyAndSubdivisionForPatient(patient)
 	countyStat := da.SyntheticCountyStats.GetStatByCounty(county)
 	cousubStat := da.SyntheticSubdivisionStats.GetStatBySubdivision(cousub)
 	da.SyntheticCountyStats.AddFemaleToStat(countyStat)
@@ -434,7 +445,7 @@ func (da *StatsDataAccess) AddFemalePatient(patient *models.Patient) {
 
 // RemoveMale decrements the male and total population counts for the patient's county and subdivision
 func (da *StatsDataAccess) RemoveMalePatient(patient *models.Patient) {
-	county, cousub := da.getCountyAndSubdivisionForPatient(patient)
+	county, cousub := da.GetCountyAndSubdivisionForPatient(patient)
 	countyStat := da.SyntheticCountyStats.GetStatByCounty(county)
 	cousubStat := da.SyntheticSubdivisionStats.GetStatBySubdivision(cousub)
 	da.SyntheticCountyStats.RemoveMaleFromStat(countyStat)
@@ -443,18 +454,96 @@ func (da *StatsDataAccess) RemoveMalePatient(patient *models.Patient) {
 
 // RemoveFemale decrements the female and total population counts for the patient's county and subdivision
 func (da *StatsDataAccess) RemoveFemalePatient(patient *models.Patient) {
-	county, cousub := da.getCountyAndSubdivisionForPatient(patient)
+	county, cousub := da.GetCountyAndSubdivisionForPatient(patient)
 	countyStat := da.SyntheticCountyStats.GetStatByCounty(county)
 	cousubStat := da.SyntheticSubdivisionStats.GetStatBySubdivision(cousub)
 	da.SyntheticCountyStats.RemoveFemaleFromStat(countyStat)
 	da.SyntheticSubdivisionStats.RemoveFemaleFromStat(cousubStat)
 }
 
-// getCountyAndSubdivisionForPatient returns the county and subdivision objects given the patient's address
-func (da *StatsDataAccess) getCountyAndSubdivisionForPatient(patient *models.Patient) (county County, cousub Subdivision) {
+// GetCountyAndSubdivisionForPatient returns the county and subdivision objects given the patient's address
+func (da *StatsDataAccess) GetCountyAndSubdivisionForPatient(patient *models.Patient) (county County, cousub Subdivision) {
 	cousub = da.Subdivisions.GetSubdivisionByName(patient.Address[0].City)
 	county = da.Counties.GetCountyById(cousub.CountyFp)
 	return county, cousub
+}
+
+func (da *StatsDataAccess) AddMaleCondition(patient *models.Patient, condition *models.Condition) {
+	county, cousub := da.GetCountyAndSubdivisionForPatient(patient)
+	conditionName := da.GetConditionName(condition)
+
+	if conditionName == "" {
+		// We can't do anything if we don't know what the condition is
+		return
+	}
+
+	countyFact := da.SyntheticCountyFacts.GetFactByCountyAndCondition(county, conditionName)
+	cousubFact := da.SyntheticSubdivisionFacts.GetFactBySubdivisionAndCondition(cousub, conditionName)
+	da.SyntheticCountyFacts.AddMaleToFact(countyFact)
+	da.SyntheticSubdivisionFacts.AddMaleToFact(cousubFact)
+}
+
+func (da *StatsDataAccess) AddFemaleCondition(patient *models.Patient, condition *models.Condition) {
+	county, cousub := da.GetCountyAndSubdivisionForPatient(patient)
+	conditionName := da.GetConditionName(condition)
+
+	if conditionName == "" {
+		// We can't do anything if we don't know what the condition is
+		return
+	}
+
+	countyFact := da.SyntheticCountyFacts.GetFactByCountyAndCondition(county, conditionName)
+	cousubFact := da.SyntheticSubdivisionFacts.GetFactBySubdivisionAndCondition(cousub, conditionName)
+	da.SyntheticCountyFacts.AddFemaleToFact(countyFact)
+	da.SyntheticSubdivisionFacts.AddFemaleToFact(cousubFact)
+}
+
+func (da *StatsDataAccess) RemoveMaleCondition(patient *models.Patient, condition *models.Condition) {
+	county, cousub := da.GetCountyAndSubdivisionForPatient(patient)
+	conditionName := da.GetConditionName(condition)
+
+	if conditionName == "" {
+		// We can't do anything if we don't know what the condition is
+		return
+	}
+
+	countyFact := da.SyntheticCountyFacts.GetFactByCountyAndCondition(county, conditionName)
+	cousubFact := da.SyntheticSubdivisionFacts.GetFactBySubdivisionAndCondition(cousub, conditionName)
+	da.SyntheticCountyFacts.RemoveMaleFromFact(countyFact)
+	da.SyntheticSubdivisionFacts.RemoveMaleFromFact(cousubFact)
+}
+
+func (da *StatsDataAccess) RemoveFemaleCondition(patient *models.Patient, condition *models.Condition) {
+	county, cousub := da.GetCountyAndSubdivisionForPatient(patient)
+	conditionName := da.GetConditionName(condition)
+
+	if conditionName == "" {
+		// We can't do anything if we don't know what the condition is
+		return
+	}
+
+	countyFact := da.SyntheticCountyFacts.GetFactByCountyAndCondition(county, conditionName)
+	cousubFact := da.SyntheticSubdivisionFacts.GetFactBySubdivisionAndCondition(cousub, conditionName)
+	da.SyntheticCountyFacts.RemoveFemaleFromFact(countyFact)
+	da.SyntheticSubdivisionFacts.RemoveFemaleFromFact(cousubFact)
+}
+
+// GetConditionName returns the condition name (key) we use to track county and subdivision facts.
+func (da *StatsDataAccess) GetConditionName(condition *models.Condition) string {
+	snomedCode := getConditionCode(condition)
+	disease := da.SyntheticDiseases.GetSyntheticDiseaseBySnomedCode(snomedCode)
+	return disease.ConditionName
+}
+
+// getConditionCode returns the condition's SNOMED code, if it exists
+func getConditionCode(condition *models.Condition) string {
+	codings := condition.Code.Coding
+	for _, coding := range codings {
+		if coding.System == SnomedCodeSystem {
+			return coding.Code
+		}
+	}
+	return ""
 }
 
 // NewPgStatsDataAccess returns a new StatsDataAccess object with each *DataAccess interface initialized.
