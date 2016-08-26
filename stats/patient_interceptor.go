@@ -2,8 +2,9 @@ package stats
 
 import (
 	"errors"
-	"github.com/intervention-engine/fhir/models"
 	"log"
+
+	"github.com/intervention-engine/fhir/models"
 )
 
 // PatientStatsCreateInterceptor intercepts any new patient resources added to the database

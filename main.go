@@ -2,11 +2,12 @@ package main
 
 import (
 	"flag"
+	"log"
+
 	"github.com/intervention-engine/fhir/server"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"github.com/synthetichealth/gofhir/stats"
-	"log"
 )
 
 func main() {
