@@ -1,7 +1,7 @@
 {
 	"ImportPath": "github.com/synthetichealth/gofhir",
 	"GoVersion": "go1.6",
-	"GodepVersion": "v63",
+	"GodepVersion": "v74",
 	"Deps": [
 		{
 			"ImportPath": "github.com/gin-gonic/gin",
@@ -24,18 +24,18 @@
 		},
 		{
 			"ImportPath": "github.com/intervention-engine/fhir/models",
-			"Comment": "DSTU1-190-g9d7e811",
-			"Rev": "9d7e81187d76f923fa34c5e35d6aaa8557909b06"
+			"Comment": "DSTU1-208-g5d400ec",
+			"Rev": "5d400ec16f548ddfe0c5dc00fbc6159d9aa53d60"
 		},
 		{
 			"ImportPath": "github.com/intervention-engine/fhir/search",
-			"Comment": "DSTU1-190-g9d7e811",
-			"Rev": "9d7e81187d76f923fa34c5e35d6aaa8557909b06"
+			"Comment": "DSTU1-208-g5d400ec",
+			"Rev": "5d400ec16f548ddfe0c5dc00fbc6159d9aa53d60"
 		},
 		{
 			"ImportPath": "github.com/intervention-engine/fhir/server",
-			"Comment": "DSTU1-190-g9d7e811",
-			"Rev": "9d7e81187d76f923fa34c5e35d6aaa8557909b06"
+			"Comment": "DSTU1-208-g5d400ec",
+			"Rev": "5d400ec16f548ddfe0c5dc00fbc6159d9aa53d60"
 		},
 		{
 			"ImportPath": "github.com/jinzhu/gorm",
@@ -98,6 +98,61 @@
 			"ImportPath": "gopkg.in/mgo.v2/internal/scram",
 			"Comment": "r2015.12.06-2-g03c9f3e",
 			"Rev": "03c9f3ee4c14c8e51ee521a6a7d0425658dd6f64"
+		},
+		{
+			"ImportPath": "github.com/intervention-engine/fhir/vendor/gopkg.in/mgo.v2/bson",
+			"Comment": "DSTU1-208-g5d400ec",
+			"Rev": "5d400ec16f548ddfe0c5dc00fbc6159d9aa53d60"
+		},
+		{
+			"ImportPath": "github.com/intervention-engine/fhir/vendor/gopkg.in/mgo.v2",
+			"Comment": "DSTU1-208-g5d400ec",
+			"Rev": "5d400ec16f548ddfe0c5dc00fbc6159d9aa53d60"
+		},
+		{
+			"ImportPath": "github.com/intervention-engine/fhir/vendor/gopkg.in/mgo.v2/internal/sasl",
+			"Comment": "DSTU1-208-g5d400ec",
+			"Rev": "5d400ec16f548ddfe0c5dc00fbc6159d9aa53d60"
+		},
+		{
+			"ImportPath": "github.com/intervention-engine/fhir/vendor/gopkg.in/mgo.v2/internal/scram",
+			"Comment": "DSTU1-208-g5d400ec",
+			"Rev": "5d400ec16f548ddfe0c5dc00fbc6159d9aa53d60"
+		},
+		{
+			"ImportPath": "github.com/intervention-engine/fhir/vendor/github.com/gin-gonic/gin",
+			"Comment": "DSTU1-208-g5d400ec",
+			"Rev": "5d400ec16f548ddfe0c5dc00fbc6159d9aa53d60"
+		},
+		{
+			"ImportPath": "github.com/intervention-engine/fhir/vendor/github.com/gin-gonic/gin/binding",
+			"Comment": "DSTU1-208-g5d400ec",
+			"Rev": "5d400ec16f548ddfe0c5dc00fbc6159d9aa53d60"
+		},
+		{
+			"ImportPath": "github.com/intervention-engine/fhir/vendor/github.com/gin-gonic/gin/render",
+			"Comment": "DSTU1-208-g5d400ec",
+			"Rev": "5d400ec16f548ddfe0c5dc00fbc6159d9aa53d60"
+		},
+		{
+			"ImportPath": "github.com/intervention-engine/fhir/vendor/github.com/manucorporat/sse",
+			"Comment": "DSTU1-208-g5d400ec",
+			"Rev": "5d400ec16f548ddfe0c5dc00fbc6159d9aa53d60"
+		},
+		{
+			"ImportPath": "github.com/intervention-engine/fhir/vendor/golang.org/x/net/context",
+			"Comment": "DSTU1-208-g5d400ec",
+			"Rev": "5d400ec16f548ddfe0c5dc00fbc6159d9aa53d60"
+		},
+		{
+			"ImportPath": "github.com/intervention-engine/fhir/vendor/github.com/golang/protobuf/proto",
+			"Comment": "DSTU1-208-g5d400ec",
+			"Rev": "5d400ec16f548ddfe0c5dc00fbc6159d9aa53d60"
+		},
+		{
+			"ImportPath": "github.com/intervention-engine/fhir/vendor/gopkg.in/go-playground/validator.v8",
+			"Comment": "DSTU1-208-g5d400ec",
+			"Rev": "5d400ec16f548ddfe0c5dc00fbc6159d9aa53d60"
 		}
 	]
 }
