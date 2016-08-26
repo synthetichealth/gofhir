@@ -237,11 +237,11 @@ func (da *PgSyntheticCountyStatDataAccess) modifyPopulationCount(stat SyntheticC
 	stat.PopulationMale += maleDelta
 	stat.PopulationFemale += femaleDelta
 	stat.PopulationPerSquareMile = float64(stat.Population) / stat.SquareMiles
-	da.DB.Model(&stat).UpdateColumns(SyntheticCountyStat{
-		Population:              stat.Population,
-		PopulationMale:          stat.PopulationMale,
-		PopulationFemale:        stat.PopulationFemale,
-		PopulationPerSquareMile: stat.PopulationPerSquareMile,
+	da.DB.Model(&stat).Updates(map[string]interface{}{
+		"pop":        stat.Population,
+		"pop_male":   stat.PopulationMale,
+		"pop_female": stat.PopulationFemale,
+		"pop_sm":     stat.PopulationPerSquareMile,
 	})
 }
 
@@ -277,11 +277,11 @@ func (da *PgSyntheticSubdivisionStatDataAccess) modifyPopulationCount(stat Synth
 	stat.PopulationMale += maleDelta
 	stat.PopulationFemale += femaleDelta
 	stat.PopulationPerSquareMile = float64(stat.Population) / stat.SquareMiles
-	da.DB.Model(&stat).UpdateColumns(SyntheticSubdivisionStat{
-		Population:              stat.Population,
-		PopulationMale:          stat.PopulationMale,
-		PopulationFemale:        stat.PopulationFemale,
-		PopulationPerSquareMile: stat.PopulationPerSquareMile,
+	da.DB.Model(&stat).Updates(map[string]interface{}{
+		"pop":        stat.Population,
+		"pop_male":   stat.PopulationMale,
+		"pop_female": stat.PopulationFemale,
+		"pop_sm":     stat.PopulationPerSquareMile,
 	})
 }
 
@@ -303,28 +303,41 @@ func (da *PgSyntheticCountyFactDataAccess) GetFactByCountyAndCondition(county Co
 func (da *PgSyntheticCountyFactDataAccess) AddMaleToFact(fact SyntheticCountyFact) {
 	fact.Population += 1
 	fact.PopulationMale += 1
-	da.DB.Model(&fact).UpdateColumns(SyntheticCountyFact{Population: fact.Population, PopulationMale: fact.PopulationMale})
+	da.DB.Model(&fact).Updates(map[string]interface{}{
+		"pop":      fact.Population,
+		"pop_male": fact.PopulationMale,
+	})
 }
 
 // AddFemaleToFact increments the female and total population counts for the given SyntheticCountyFact (county and disease)
 func (da *PgSyntheticCountyFactDataAccess) AddFemaleToFact(fact SyntheticCountyFact) {
 	fact.Population += 1
 	fact.PopulationFemale += 1
-	da.DB.Model(&fact).UpdateColumns(SyntheticCountyFact{Population: fact.Population, PopulationFemale: fact.PopulationFemale})
+	da.DB.Model(&fact).Updates(map[string]interface{}{
+		"pop":        fact.Population,
+		"pop_female": fact.PopulationFemale,
+	})
 }
 
 // RemoveMaleFromFact decrements the male and total population counts for the given SyntheticCountyFact (county and disease)
 func (da *PgSyntheticCountyFactDataAccess) RemoveMaleFromFact(fact SyntheticCountyFact) {
 	fact.Population -= 1
 	fact.PopulationMale -= 1
-	da.DB.Model(&fact).UpdateColumns(SyntheticCountyFact{Population: fact.Population, PopulationMale: fact.PopulationMale})
+	da.DB.Model(&fact).Updates(map[string]interface{}{
+		"pop":      fact.Population,
+		"pop_male": fact.PopulationMale,
+	})
 }
 
 // RemoveFemaleFromFact decrements the female and total population counts for the given SyntheticCountyFact (county and disease)
 func (da *PgSyntheticCountyFactDataAccess) RemoveFemaleFromFact(fact SyntheticCountyFact) {
 	fact.Population -= 1
 	fact.PopulationFemale -= 1
-	da.DB.Model(&fact).UpdateColumns(SyntheticCountyFact{Population: fact.Population, PopulationFemale: fact.PopulationFemale})
+	da.DB.Model(&fact).Updates(map[string]interface{}{
+		"pop":        fact.Population,
+		"pop_female": fact.PopulationFemale,
+	})
+
 }
 
 // PgSyntheticSubdivisionFactDataAccess implements the SyntheticSubdivisionFactDataAccess interface using a Postgres data connection.
@@ -345,29 +358,40 @@ func (da *PgSyntheticSubdivisionFactDataAccess) GetFactBySubdivisionAndCondition
 func (da *PgSyntheticSubdivisionFactDataAccess) AddMaleToFact(fact SyntheticSubdivisionFact) {
 	fact.Population += 1
 	fact.PopulationMale += 1
-	da.DB.Model(&fact).UpdateColumns(SyntheticSubdivisionFact{Population: fact.Population, PopulationMale: fact.PopulationMale})
-
+	da.DB.Model(&fact).Updates(map[string]interface{}{
+		"pop":      fact.Population,
+		"pop_male": fact.PopulationMale,
+	})
 }
 
 // AddFemaleToFact increments the female and total population counts for the given SyntheticSubdivisionFact (subdivision and disease)
 func (da *PgSyntheticSubdivisionFactDataAccess) AddFemaleToFact(fact SyntheticSubdivisionFact) {
 	fact.Population += 1
 	fact.PopulationFemale += 1
-	da.DB.Model(&fact).UpdateColumns(SyntheticSubdivisionFact{Population: fact.Population, PopulationFemale: fact.PopulationFemale})
+	da.DB.Model(&fact).Updates(map[string]interface{}{
+		"pop":        fact.Population,
+		"pop_female": fact.PopulationFemale,
+	})
 }
 
 // RemoveMaleFromFact decrements the male and total population counts for the given SyntheticSubdivisionFact (subdivision and disease)
 func (da *PgSyntheticSubdivisionFactDataAccess) RemoveMaleFromFact(fact SyntheticSubdivisionFact) {
 	fact.Population -= 1
 	fact.PopulationMale -= 1
-	da.DB.Model(&fact).UpdateColumns(SyntheticSubdivisionFact{Population: fact.Population, PopulationMale: fact.PopulationMale})
+	da.DB.Model(&fact).Updates(map[string]interface{}{
+		"pop":      fact.Population,
+		"pop_male": fact.PopulationMale,
+	})
 }
 
 // RemoveFemaleFromFact decrements the female and total population counts for the given SyntheticSubdivisionFact (subdivision and disease)
 func (da *PgSyntheticSubdivisionFactDataAccess) RemoveFemaleFromFact(fact SyntheticSubdivisionFact) {
 	fact.Population -= 1
 	fact.PopulationFemale -= 1
-	da.DB.Model(&fact).UpdateColumns(SyntheticSubdivisionFact{Population: fact.Population, PopulationFemale: fact.PopulationFemale})
+	da.DB.Model(&fact).Updates(map[string]interface{}{
+		"pop":        fact.Population,
+		"pop_female": fact.PopulationFemale,
+	})
 }
 
 // getDiseaseIds returns a slice of disease IDs from a slice of diseases
