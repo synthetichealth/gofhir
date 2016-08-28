@@ -95,7 +95,7 @@ ALTER TABLE synth_ma.synth_disease OWNER TO fhir_test;
 CREATE SEQUENCE county_factid_seq;
 CREATE TABLE synth_ma.synth_county_facts (
     factid integer NOT NULL DEFAULT nextval('county_factid_seq'),
-    cntyidfp character varying(5) NOT NULL,
+    countyfp character varying(3) NOT NULL,
     diseasefp integer NOT NULL,
     pop numeric,
     pop_male numeric,
@@ -109,13 +109,13 @@ WITH (
 
 ALTER SEQUENCE county_factid_seq OWNER TO fhir_test;
 ALTER TABLE synth_ma.synth_county_facts OWNER TO fhir_test;
-CREATE UNIQUE INDEX county_facts_uidx ON synth_ma.synth_county_facts (cntyidfp, diseasefp);
+CREATE UNIQUE INDEX county_facts_uidx ON synth_ma.synth_county_facts (countyfp, diseasefp);
 
 -- Create county subdivision fact table
 CREATE SEQUENCE cousub_factid_seq;
 CREATE TABLE synth_ma.synth_cousub_facts (
     factid integer NOT NULL DEFAULT nextval('cousub_factid_seq'),
-    cosbidfp character varying(10) NOT NULL,
+    cousubfp character varying(5) NOT NULL,
     diseasefp integer NOT NULL,
     pop numeric,
     pop_male numeric,
@@ -129,7 +129,7 @@ WITH (
 
 ALTER SEQUENCE cousub_factid_seq OWNER TO fhir_test;
 ALTER TABLE synth_ma.synth_cousub_facts OWNER TO fhir_test;
-CREATE UNIQUE INDEX cousub_facts_uidx ON synth_ma.synth_cousub_facts (cosbidfp, diseasefp);
+CREATE UNIQUE INDEX cousub_facts_uidx ON synth_ma.synth_cousub_facts (cousubfp, diseasefp);
 EOF
 
 # County Tiger Data
@@ -159,14 +159,14 @@ cat $PWD/data/disease.csv | psql -d fhir_test -c "\COPY synth_ma.synth_disease (
 # This is every permutation of county/cousub ID and disease ID.
 psql -d fhir_test <<EOF
 -- Populate the county fact table
-INSERT INTO synth_ma.synth_county_facts(cntyidfp, diseasefp, pop, pop_male, pop_female, rate)
-SELECT c.cntyidfp, d.diseasefp, 0, 0, 0, 0
+INSERT INTO synth_ma.synth_county_facts(countyfp, diseasefp, pop, pop_male, pop_female, rate)
+SELECT c.countyfp, d.diseasefp, 0, 0, 0, 0
 FROM tiger.county AS c 
 CROSS JOIN synth_ma.synth_disease AS d;
 
 -- Populate the cousub fact table
-INSERT INTO synth_ma.synth_cousub_facts(cosbidfp, diseasefp, pop, pop_male, pop_female, rate)
-SELECT c.cosbidfp, d.diseasefp, 0, 0, 0, 0
+INSERT INTO synth_ma.synth_cousub_facts(cousubfp, diseasefp, pop, pop_male, pop_female, rate)
+SELECT c.cousubfp, d.diseasefp, 0, 0, 0, 0
 FROM tiger.cousub AS c 
 CROSS JOIN synth_ma.synth_disease AS d;
 EOF

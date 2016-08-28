@@ -21,14 +21,9 @@ func (s *PatientStatsCreateInterceptor) After(resource interface{}) {
 	patient, ok := resource.(*models.Patient)
 
 	if ok {
-		gender := patient.Gender
-		switch gender {
-		case "male":
-			s.DataAccess.AddMalePatient(patient)
-		case "female":
-			s.DataAccess.AddFemalePatient(patient)
-		default:
-			log.Printf("PatientStatsCreateInterceptor: Invalid gender for patient %s\n", patient.Id)
+		err := s.DataAccess.AddPatient(patient)
+		if err != nil {
+			log.Printf("PatientStatsCreateInterceptor: %s\n", err.Error())
 		}
 	}
 }
@@ -53,9 +48,9 @@ func (s *PatientStatsUpdateInterceptor) Before(resource interface{}) {
 	if ok {
 		s.patientBefore = patient
 	} else {
-		errmsg := "PatientStatsUpdateInterceptor:Before: Failed to cache patient before update\n"
+		errmsg := "PatientStatsUpdateInterceptor:Before: Failed to cache patient before update"
 		s.cacheError = errors.New(errmsg)
-		log.Printf(errmsg)
+		log.Println(errmsg)
 	}
 }
 
@@ -68,15 +63,17 @@ func (s *PatientStatsUpdateInterceptor) After(resource interface{}) {
 		// see if the patient's address (or at least, his/her city) changed, and update stats
 		if s.patientBefore.Address[0].City != "" && s.patientBefore.Address[0].City != patientAfter.Address[0].City {
 
-			switch patientAfter.Gender {
-			case "male":
-				s.DataAccess.RemoveMalePatient(s.patientBefore)
-				s.DataAccess.AddMalePatient(patientAfter)
-			case "female":
-				s.DataAccess.RemoveFemalePatient(s.patientBefore)
-				s.DataAccess.AddFemalePatient(patientAfter)
-			default:
-				log.Printf("PatientStatsUpdateInterceptor: Invalid gender for patient %s\n", patientAfter.Id)
+			var err error
+
+			err = s.DataAccess.RemovePatient(s.patientBefore)
+			if err != nil {
+				log.Printf("PatientStatsUpdateInterceptor: %s\n", err.Error())
+				return
+			}
+
+			err = s.DataAccess.AddPatient(patientAfter)
+			if err != nil {
+				log.Printf("PatientStatsUpdateInterceptor: %s\n", err.Error())
 			}
 		}
 	}
@@ -99,13 +96,10 @@ func (s *PatientStatsDeleteInterceptor) After(resource interface{}) {
 	patient, ok := resource.(*models.Patient)
 
 	if ok {
-		switch patient.Gender {
-		case "male":
-			s.DataAccess.RemoveMalePatient(patient)
-		case "female":
-			s.DataAccess.RemoveFemalePatient(patient)
-		default:
-			log.Printf("PatientStatsDeleteInterceptor: Invalid gender for patient %s\n", patient.Id)
+		err := s.DataAccess.RemovePatient(patient)
+
+		if err != nil {
+			log.Printf("PatientStatsDeleteInterceptor: %s\n", err.Error())
 		}
 	}
 }
