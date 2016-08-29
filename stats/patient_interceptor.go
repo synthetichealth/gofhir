@@ -10,7 +10,7 @@ import (
 // PatientStatsCreateInterceptor intercepts any new patient resources added to the database
 // and updates the Synthetic Mass population statistics based on that patient's address.
 type PatientStatsCreateInterceptor struct {
-	DataAccess *StatsDataAccess
+	DataAccess StatsDataAccess
 }
 
 // Before is unused
@@ -21,9 +21,9 @@ func (s *PatientStatsCreateInterceptor) After(resource interface{}) {
 	patient, ok := resource.(*models.Patient)
 
 	if ok {
-		err := s.DataAccess.AddPatient(patient)
+		err := s.DataAccess.AddPatientStat(patient)
 		if err != nil {
-			log.Printf("PatientStatsCreateInterceptor: %s\n", err.Error())
+			log.Printf("PatientStatsCreateInterceptor: After: %s\n", err.Error())
 		}
 	}
 }
@@ -34,7 +34,7 @@ func (s *PatientStatsCreateInterceptor) OnError(err error, resource interface{})
 // PatientStatsUpdateInterceptor intercepts any updated patient resources
 // and updates the Synthetic Mass population statistics based on that patient's address.
 type PatientStatsUpdateInterceptor struct {
-	DataAccess *StatsDataAccess
+	DataAccess StatsDataAccess
 	// The state of the patient before the database update, for comparison after the database update
 	patientBefore *models.Patient
 	// Tracks if the interceptor failed to cache the patient model before the update
@@ -48,7 +48,7 @@ func (s *PatientStatsUpdateInterceptor) Before(resource interface{}) {
 	if ok {
 		s.patientBefore = patient
 	} else {
-		errmsg := "PatientStatsUpdateInterceptor:Before: Failed to cache patient before update"
+		errmsg := "PatientStatsUpdateInterceptor: Before: Failed to cache patient before update"
 		s.cacheError = errors.New(errmsg)
 		log.Println(errmsg)
 	}
@@ -65,15 +65,15 @@ func (s *PatientStatsUpdateInterceptor) After(resource interface{}) {
 
 			var err error
 
-			err = s.DataAccess.RemovePatient(s.patientBefore)
+			err = s.DataAccess.RemovePatientStat(s.patientBefore)
 			if err != nil {
-				log.Printf("PatientStatsUpdateInterceptor: %s\n", err.Error())
+				log.Printf("PatientStatsUpdateInterceptor: After: %s\n", err.Error())
 				return
 			}
 
-			err = s.DataAccess.AddPatient(patientAfter)
+			err = s.DataAccess.AddPatientStat(patientAfter)
 			if err != nil {
-				log.Printf("PatientStatsUpdateInterceptor: %s\n", err.Error())
+				log.Printf("PatientStatsUpdateInterceptor: After: %s\n", err.Error())
 			}
 		}
 	}
@@ -85,7 +85,7 @@ func (s *PatientStatsUpdateInterceptor) OnError(err error, resource interface{})
 // PatientStatsDeleteInterceptor intercepts any deleted patient resources
 // and updates the Synthetic Mass population statistics based on that patient's address.
 type PatientStatsDeleteInterceptor struct {
-	DataAccess *StatsDataAccess
+	DataAccess StatsDataAccess
 }
 
 // Before is unused
@@ -96,10 +96,10 @@ func (s *PatientStatsDeleteInterceptor) After(resource interface{}) {
 	patient, ok := resource.(*models.Patient)
 
 	if ok {
-		err := s.DataAccess.RemovePatient(patient)
+		err := s.DataAccess.RemovePatientStat(patient)
 
 		if err != nil {
-			log.Printf("PatientStatsDeleteInterceptor: %s\n", err.Error())
+			log.Printf("PatientStatsDeleteInterceptor: After: %s\n", err.Error())
 		}
 	}
 }
