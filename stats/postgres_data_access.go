@@ -69,9 +69,8 @@ func (da *PgStatsDataAccess) RemoveConditionStat(patient *models.Patient, condit
 // match the subdivision in the given patient's address.
 func (da *PgStatsDataAccess) identifyCountyAndSubdivisionForPatient(patient *models.Patient) (countyfp, cousubfp string, err error) {
 
-	if len(patient.Address) == 0 || patient.Address[0].City == "" {
-		err = ErrNoAddress
-		return
+	if !patientAddressIsValid(patient) {
+		return "", "", ErrNoAddress
 	}
 
 	err = da.DB.QueryRow("SELECT countyfp, cousubfp FROM tiger.cousub WHERE name = $1", patient.Address[0].City).Scan(&countyfp, &cousubfp)
@@ -170,6 +169,18 @@ func (da *PgStatsDataAccess) updateFacts(patient *models.Patient, condition *mod
 // patientGenderIsValid tests if the patient object provided has a valid gender.
 func patientGenderIsValid(patient *models.Patient) bool {
 	return (patient.Gender == "male" || patient.Gender == "female")
+}
+
+// patientAddressIsValid tests if the patient's address is valid
+func patientAddressIsValid(patient *models.Patient) bool {
+	if len(patient.Address) == 0 {
+		return false
+	}
+
+	if patient.Address[0].City == "" {
+		return false
+	}
+	return true
 }
 
 // getSnomedCode returns the condition's SNOMED code, if it exists
