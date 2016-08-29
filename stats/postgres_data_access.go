@@ -94,7 +94,6 @@ func (da *PgStatsDataAccess) identifyDiseaseForCondition(condition *models.Condi
 func (da *PgStatsDataAccess) updateStats(patient *models.Patient, op string) (err error) {
 
 	countyfp, cousubfp, err := da.identifyCountyAndSubdivisionForPatient(patient)
-
 	if err != nil {
 		return
 	}
@@ -131,8 +130,11 @@ func (da *PgStatsDataAccess) updateStats(patient *models.Patient, op string) (er
 func (da *PgStatsDataAccess) updateFacts(patient *models.Patient, condition *models.Condition, op string) (err error) {
 
 	countyfp, cousubfp, err := da.identifyCountyAndSubdivisionForPatient(patient)
-	diseasefp, err := da.identifyDiseaseForCondition(condition)
+	if err != nil {
+		return
+	}
 
+	diseasefp, err := da.identifyDiseaseForCondition(condition)
 	if err != nil {
 		return
 	}
