@@ -18,6 +18,7 @@ type ConditionStatsCreateInterceptor struct {
 // Before is unused
 func (s *ConditionStatsCreateInterceptor) Before(resource interface{}) {}
 
+// After increments disease statistics for given after a new condition resource is created.
 func (s *ConditionStatsCreateInterceptor) After(resource interface{}) {
 	condition, ok := resource.(*models.Condition)
 
@@ -37,8 +38,10 @@ func (s *ConditionStatsCreateInterceptor) After(resource interface{}) {
 			return
 		}
 
-		patient := result.(*models.Patient)
-		err = s.PgDataAccess.AddConditionStat(patient, condition)
+		if !conditionIsAbated(condition) {
+			patient := result.(*models.Patient)
+			err = s.PgDataAccess.AddConditionStat(patient, condition)
+		}
 
 		if err != nil {
 			log.Printf("ConditionStatsCreateInterceptor: %s\n", err.Error())
@@ -49,7 +52,7 @@ func (s *ConditionStatsCreateInterceptor) After(resource interface{}) {
 // OnError is unused
 func (s *ConditionStatsCreateInterceptor) OnError(err error, resource interface{}) {}
 
-// ConditionStatsCreateInterceptor intercepts any updates to condition resources in the database
+// ConditionStatsUpdateInterceptor intercepts any updates to condition resources in the database
 // and updates the Synthetic Mass condition statistics based on the condition's patient's address.
 type ConditionStatsUpdateInterceptor struct {
 	PgDataAccess    StatsDataAccess
@@ -60,6 +63,7 @@ type ConditionStatsUpdateInterceptor struct {
 	cacheError error
 }
 
+// Before caches a condition resource before it's updated, for comparison after the update.
 func (s *ConditionStatsUpdateInterceptor) Before(resource interface{}) {
 	condition, ok := resource.(*models.Condition)
 
@@ -72,6 +76,8 @@ func (s *ConditionStatsUpdateInterceptor) Before(resource interface{}) {
 	}
 }
 
+// After compares the updated condition resource to the cached condition resource (from before the update), then
+// updates population statistics based on that resource's patient's address.
 func (s *ConditionStatsUpdateInterceptor) After(resource interface{}) {
 	condition, ok := resource.(*models.Condition)
 
@@ -104,7 +110,7 @@ func (s *ConditionStatsUpdateInterceptor) After(resource interface{}) {
 // OnError is unused
 func (s *ConditionStatsUpdateInterceptor) OnError(err error, resource interface{}) {}
 
-// ConditionStatsCreateInterceptor intercepts any deleted condition resources
+// ConditionStatsDeleteInterceptor intercepts any deleted condition resources
 // and updates the Synthetic Mass condition statistics based on the condition's patient's address.
 type ConditionStatsDeleteInterceptor struct {
 	PgDataAccess    StatsDataAccess
@@ -114,6 +120,7 @@ type ConditionStatsDeleteInterceptor struct {
 // Before is unused
 func (s *ConditionStatsDeleteInterceptor) Before(resource interface{}) {}
 
+// After decrements disease statistics for a given condition resource after it's deleted.
 func (s *ConditionStatsDeleteInterceptor) After(resource interface{}) {
 	condition, ok := resource.(*models.Condition)
 
@@ -133,8 +140,10 @@ func (s *ConditionStatsDeleteInterceptor) After(resource interface{}) {
 			return
 		}
 
-		patient := result.(*models.Patient)
-		err = s.PgDataAccess.RemoveConditionStat(patient, condition)
+		if !conditionIsAbated(condition) {
+			patient := result.(*models.Patient)
+			err = s.PgDataAccess.RemoveConditionStat(patient, condition)
+		}
 
 		if err != nil {
 			log.Printf("ConditionStatsDeleteInterceptor: %s\n", err.Error())
