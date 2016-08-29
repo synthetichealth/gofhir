@@ -1,15 +1,14 @@
 package main
 
 import (
+	"database/sql"
 	"flag"
 	"log"
 
-	"github.com/synthetichealth/gofhir/ptstats"
-
 	"github.com/intervention-engine/fhir/server"
-
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/postgres"
+	_ "github.com/lib/pq"
+	"github.com/synthetichealth/gofhir/stats"
+	"gopkg.in/mgo.v2"
 )
 
 func main() {
@@ -23,27 +22,39 @@ func main() {
 	}
 
 	// configure the GORM Postgres driver and database connection
-	db, err := gorm.Open("postgres", *pgURL)
-	db.SingularTable(true) // disable table name pluralization globally
+	db, err := sql.Open("postgres", *pgURL)
 
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer db.Close()
 	// ping the db to ensure we connected successfully
-	if err := db.DB().Ping(); err != nil {
+	if err := db.Ping(); err != nil {
 		log.Fatal(err)
 	}
-	// configure the stat interceptor
-	ptStatsInterceptor := &ptstats.PtStatsInterceptor{
-		CousubDA:           &ptstats.PgCountySubdivisionDataAccess{DB: db},
-		SynthCountyStatsDA: &ptstats.PgSyntheticCountyStatsDataAccess{DB: db},
-		SynthCousubStatsDA: &ptstats.PgSyntheticCountySubdivisionStatsDataAccess{DB: db},
-	}
+	da := stats.NewPgStatsDataAccess(db)
 
 	// setup and run the server
 	s := server.NewServer(*mongoHost)
-	s.Engine.Use(ptStatsInterceptor.Handler)
+
+	// Register patient interceptors
+	s.AddInterceptor("Create", "Patient", stats.NewPatientStatsCreateInterceptor(da))
+	s.AddInterceptor("Delete", "Patient", stats.NewPatientStatsDeleteInterceptor(da))
+
+	// Register condition interceptors
+	// The condition interceptors also require a mongodb connection
+	session, err := mgo.Dial(*mongoHost)
+	if err != nil {
+		panic(err)
+	}
+	defer session.Close()
+
+	mdb := session.DB("fhir")
+	mda := server.NewMongoDataAccessLayer(mdb, make(map[string]server.InterceptorList))
+	s.AddInterceptor("Create", "Condition", stats.NewConditionStatsCreateInterceptor(da, mda))
+	s.AddInterceptor("Update", "Condition", stats.NewConditionStatsUpdateInterceptor(da, mda))
+	s.AddInterceptor("Delete", "Condition", stats.NewConditionStatsDeleteInterceptor(da, mda))
+
 	s.Run(server.Config{
 		UseSmartAuth:         false,
 		UseLoggingMiddleware: false,

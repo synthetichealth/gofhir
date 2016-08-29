@@ -1,7 +1,7 @@
 {
 	"ImportPath": "github.com/synthetichealth/gofhir",
 	"GoVersion": "go1.6",
-	"GodepVersion": "v63",
+	"GodepVersion": "v74",
 	"Deps": [
 		{
 			"ImportPath": "github.com/gin-gonic/gin",
@@ -24,40 +24,21 @@
 		},
 		{
 			"ImportPath": "github.com/intervention-engine/fhir/models",
-			"Comment": "DSTU1-190-g9d7e811",
-			"Rev": "9d7e81187d76f923fa34c5e35d6aaa8557909b06"
+			"Comment": "DSTU1-208-g5d400ec",
+			"Rev": "5d400ec16f548ddfe0c5dc00fbc6159d9aa53d60"
 		},
 		{
 			"ImportPath": "github.com/intervention-engine/fhir/search",
-			"Comment": "DSTU1-190-g9d7e811",
-			"Rev": "9d7e81187d76f923fa34c5e35d6aaa8557909b06"
+			"Comment": "DSTU1-208-g5d400ec",
+			"Rev": "5d400ec16f548ddfe0c5dc00fbc6159d9aa53d60"
 		},
 		{
 			"ImportPath": "github.com/intervention-engine/fhir/server",
-			"Comment": "DSTU1-190-g9d7e811",
-			"Rev": "9d7e81187d76f923fa34c5e35d6aaa8557909b06"
-		},
-		{
-			"ImportPath": "github.com/jinzhu/gorm",
-			"Comment": "v1.0-50-ga646b13",
-			"Rev": "a646b13548ec0aa812fe805b2780f460dd2771b6"
-		},
-		{
-			"ImportPath": "github.com/jinzhu/gorm/dialects/postgres",
-			"Comment": "v1.0-50-ga646b13",
-			"Rev": "a646b13548ec0aa812fe805b2780f460dd2771b6"
-		},
-		{
-			"ImportPath": "github.com/jinzhu/inflection",
-			"Rev": "8f4d3a0d04ce0b7c0cf3126fb98524246d00d102"
+			"Comment": "DSTU1-208-g5d400ec",
+			"Rev": "5d400ec16f548ddfe0c5dc00fbc6159d9aa53d60"
 		},
 		{
 			"ImportPath": "github.com/lib/pq",
-			"Comment": "go1.0-cutoff-107-g4dd446e",
-			"Rev": "4dd446efc17690bc53e154025146f73203b18309"
-		},
-		{
-			"ImportPath": "github.com/lib/pq/hstore",
 			"Comment": "go1.0-cutoff-107-g4dd446e",
 			"Rev": "4dd446efc17690bc53e154025146f73203b18309"
 		},
