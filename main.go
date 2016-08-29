@@ -39,7 +39,6 @@ func main() {
 
 	// Register patient interceptors
 	s.AddInterceptor("Create", "Patient", stats.NewPatientStatsCreateInterceptor(da))
-	s.AddInterceptor("Update", "Patient", stats.NewPatientStatsUpdateInterceptor(da))
 	s.AddInterceptor("Delete", "Patient", stats.NewPatientStatsDeleteInterceptor(da))
 
 	// Register condition interceptors

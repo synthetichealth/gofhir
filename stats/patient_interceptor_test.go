@@ -70,53 +70,6 @@ func (s *PatientInterceptorTestSuite) TestPatientCreateInterceptor() {
 	s.NotPanics(func() { createInterceptor.After(UnkownResource{}) }, "Should not panic for non-patient resource")
 }
 
-func (s *PatientInterceptorTestSuite) TestPatientUpdateInterceptor() {
-
-	var countyStats, updatedCountyStats, cousubStats, updatedCousubStats Stats
-	var countyStats2, updatedCountyStats2, cousubStats2, updatedCousubStats2 Stats
-
-	// Get initial stats for comparison
-	countyStats, _ = s.getCountyStats(BostonCountyfp)
-	cousubStats, _ = s.getSubdivisionStats(BostonCousubfp)
-
-	patient := createPatient("Boston", "female")
-	updateInterceptor := NewPatientStatsUpdateInterceptor(s.da)
-	s.NotPanics(func() { updateInterceptor.Before(patient) }, "Should not panic for valid patient")
-	s.NotPanics(func() { updateInterceptor.After(patient) }, "Should not panic for valid patient")
-
-	// Check that the statistics didn't change (since the patient's address didnt change)
-	updatedCountyStats, _ = s.getCountyStats(BostonCountyfp)
-	updatedCousubStats, _ = s.getSubdivisionStats(BostonCousubfp)
-	s.assertCountyStatsChanged(countyStats, updatedCountyStats, 0, 0)
-	s.assertSubdivisionStatsChanged(cousubStats, updatedCousubStats, 0, 0)
-
-	// Test a change of address
-	countyStats, _ = s.getCountyStats(BostonCountyfp)
-	cousubStats, _ = s.getSubdivisionStats(BostonCousubfp)
-	countyStats2, _ = s.getCountyStats(BedfordCountyfp)
-	cousubStats2, _ = s.getSubdivisionStats(BedfordCousubfp)
-
-	updatedPatient := createPatient("Bedford", "female")
-	updateInterceptor.Before(patient)
-	updateInterceptor.After(updatedPatient)
-
-	// Check that Boston's statistics changed
-	updatedCountyStats, _ = s.getCountyStats(BostonCountyfp)
-	updatedCousubStats, _ = s.getSubdivisionStats(BostonCousubfp)
-	s.assertCountyStatsChanged(countyStats, updatedCountyStats, 0, -1)
-	s.assertSubdivisionStatsChanged(cousubStats, updatedCousubStats, 0, -1)
-
-	// Check that Bedford's statistics changed
-	updatedCountyStats2, _ = s.getCountyStats(BedfordCountyfp)
-	updatedCousubStats2, _ = s.getSubdivisionStats(BedfordCousubfp)
-	s.assertCountyStatsChanged(countyStats2, updatedCountyStats2, 0, 1)
-	s.assertSubdivisionStatsChanged(cousubStats2, updatedCousubStats2, 0, 1)
-
-	// Check handling of non-patient resources (fails silently)
-	s.NotPanics(func() { updateInterceptor.Before(UnkownResource{}) }, "Should not panic for non-patient resource")
-	s.NotPanics(func() { updateInterceptor.After(UnkownResource{}) }, "Should not panic for non-patient resource")
-}
-
 func (s *PatientInterceptorTestSuite) TestPatientDeleteInterceptor() {
 
 	var countyStats, updatedCountyStats, cousubStats, updatedCousubStats Stats

@@ -39,7 +39,9 @@ func (s *PatientStatsCreateInterceptor) After(resource interface{}) {
 func (s *PatientStatsCreateInterceptor) OnError(err error, resource interface{}) {}
 
 // PatientStatsUpdateInterceptor intercepts any updated patient resources
-// and updates the Synthetic Mass population statistics based on that patient's address.
+// and updates the Synthetic Mass population statistics based on changes to that
+// patient resource. Currently we do not support tracking any changes, but this
+// interceptor may be implemented at a later date.
 type PatientStatsUpdateInterceptor struct {
 	DataAccess StatsDataAccess
 	// The state of the patient before the database update, for comparison after the database update
@@ -53,57 +55,11 @@ func NewPatientStatsUpdateInterceptor(pgDataAccess StatsDataAccess) *PatientStat
 	return interceptor
 }
 
-// Before caches a patient resource before it's updated, for comparison after the update.
-func (s *PatientStatsUpdateInterceptor) Before(resource interface{}) {
-	patient, ok := resource.(*models.Patient)
+// Before is unused
+func (s *PatientStatsUpdateInterceptor) Before(resource interface{}) {}
 
-	if ok {
-		patientLock.Lock()
-		s.patientsBefore[patient.Id] = patient
-		patientLock.Unlock()
-	} else {
-		log.Println("PatientStatsUpdateInterceptor: Before: Failed to cache patient before update")
-	}
-}
-
-// After compares the updated patient resource to the cached patient resource (from before the update), then
-// updates population statistics based on that patient's address.
-func (s *PatientStatsUpdateInterceptor) After(resource interface{}) {
-	newPatient, ok := resource.(*models.Patient)
-
-	if ok {
-		patientLock.RLock()
-		oldPatient, found := s.patientsBefore[newPatient.Id]
-		patientLock.RUnlock()
-
-		if !found {
-			log.Println("PatientStatsUpdateInterceptor: After: Could not find cached patient")
-			return
-		}
-
-		// delete it from the map to prevent unnecessary use of memory
-		patientLock.Lock()
-		delete(s.patientsBefore, oldPatient.Id)
-		patientLock.Unlock()
-
-		// see if the patient's address (or at least, his/her city) changed, and update stats
-		if oldPatient.Address[0].City != "" && oldPatient.Address[0].City != newPatient.Address[0].City {
-
-			var err error
-
-			err = s.DataAccess.RemovePatientStat(oldPatient)
-			if err != nil {
-				log.Printf("PatientStatsUpdateInterceptor: After: %s\n", err.Error())
-				return
-			}
-
-			err = s.DataAccess.AddPatientStat(newPatient)
-			if err != nil {
-				log.Printf("PatientStatsUpdateInterceptor: After: %s\n", err.Error())
-			}
-		}
-	}
-}
+// After is unused
+func (s *PatientStatsUpdateInterceptor) After(resource interface{}) {}
 
 // OnError is unused
 func (s *PatientStatsUpdateInterceptor) OnError(err error, resource interface{}) {}
