@@ -1,7 +1,6 @@
 package stats
 
 import (
-	"errors"
 	"log"
 
 	"github.com/intervention-engine/fhir/models"
@@ -64,8 +63,6 @@ type ConditionStatsUpdateInterceptor struct {
 	MongoDataAccess server.DataAccessLayer
 	// The state of the condition before the database update, for comparison after the database update
 	conditionsBefore map[string]*models.Condition
-	// Tracks if the interceptor failed to cache the condition model before the update
-	cacheError error
 }
 
 // NewConditionStatsUpdateInterceptor returns an initialized instance of ConditionStatsUpdateInterceptor
@@ -82,36 +79,44 @@ func (s *ConditionStatsUpdateInterceptor) Before(resource interface{}) {
 	if ok {
 		s.conditionsBefore[condition.Id] = condition
 	} else {
-		errmsg := "ConditionStatsUpdateInterceptor:Before: Failed to cache condition before update"
-		s.cacheError = errors.New(errmsg)
-		log.Println(errmsg)
+		log.Println("ConditionStatsUpdateInterceptor:Before: Failed to cache condition before update")
 	}
 }
 
 // After compares the updated condition resource to the cached condition resource (from before the update), then
 // updates population statistics based on that resource's patient's address.
 func (s *ConditionStatsUpdateInterceptor) After(resource interface{}) {
-	condition, ok := resource.(*models.Condition)
+	newCondition, ok := resource.(*models.Condition)
 
-	if ok && s.cacheError == nil {
+	if ok {
+
+		oldCondition, found := s.conditionsBefore[newCondition.Id]
+
+		if !found {
+			log.Println("ConditionStatsUpdateInterceptor: After: Could not find cached condition")
+			return
+		}
+
+		// free up memory
+		delete(s.conditionsBefore, oldCondition.Id)
+
 		// see if the condition is now abated, so we can stop tracking stats for it
-		if !conditionIsAbated(s.conditionsBefore[condition.Id]) && conditionIsAbated(condition) {
+		if !conditionIsAbated(oldCondition) && conditionIsAbated(newCondition) {
 
-			if condition.Subject == nil {
-				log.Printf("ConditionStatsUpdateInterceptor: Condition %s has no subject\n", condition.Id)
+			if newCondition.Subject == nil {
+				log.Printf("ConditionStatsUpdateInterceptor: Condition %s has no subject\n", newCondition.Id)
 				return
 			}
 
-			result, err := s.MongoDataAccess.Get(condition.Subject.ReferencedID, "Patient")
+			result, err := s.MongoDataAccess.Get(newCondition.Subject.ReferencedID, "Patient")
 
 			if err != nil {
-				log.Printf("ConditionStatsUpdateInterceptor: Failed to get patient for condition %s\n", condition.Id)
+				log.Printf("ConditionStatsUpdateInterceptor: Failed to get patient for condition %s\n", newCondition.Id)
 				return
 			}
 
 			patient := result.(*models.Patient)
-			err = s.PgDataAccess.RemoveConditionStat(patient, condition)
-			delete(s.conditionsBefore, condition.Id)
+			err = s.PgDataAccess.RemoveConditionStat(patient, newCondition)
 
 			if err != nil {
 				log.Printf("ConditionStatsUpdateInterceptor: %s\n", err.Error())

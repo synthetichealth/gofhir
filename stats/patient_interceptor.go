@@ -1,7 +1,6 @@
 package stats
 
 import (
-	"errors"
 	"log"
 
 	"github.com/intervention-engine/fhir/models"
@@ -42,8 +41,6 @@ type PatientStatsUpdateInterceptor struct {
 	DataAccess StatsDataAccess
 	// The state of the patient before the database update, for comparison after the database update
 	patientsBefore map[string]*models.Patient
-	// Tracks if the interceptor failed to cache the patient model before the update
-	cacheError error
 }
 
 // NewPatientStatsUpdateInterceptor returns an initialized instance of PatientStatsUpdateInterceptor
@@ -60,32 +57,38 @@ func (s *PatientStatsUpdateInterceptor) Before(resource interface{}) {
 	if ok {
 		s.patientsBefore[patient.Id] = patient
 	} else {
-		errmsg := "PatientStatsUpdateInterceptor: Before: Failed to cache patient before update"
-		s.cacheError = errors.New(errmsg)
-		log.Println(errmsg)
+		log.Println("PatientStatsUpdateInterceptor: Before: Failed to cache patient before update")
 	}
 }
 
 // After compares the updated patient resource to the cached patient resource (from before the update), then
 // updates population statistics based on that patient's address.
 func (s *PatientStatsUpdateInterceptor) After(resource interface{}) {
-	patientAfter, ok := resource.(*models.Patient)
+	newPatient, ok := resource.(*models.Patient)
 
-	if ok && s.cacheError == nil {
+	if ok {
+		oldPatient, found := s.patientsBefore[newPatient.Id]
+
+		if !found {
+			log.Println("PatientStatsUpdateInterceptor: After: Could not find cached patient")
+			return
+		}
+
+		// delete it from the map to prevent unnecessary use of memory
+		delete(s.patientsBefore, oldPatient.Id)
+
 		// see if the patient's address (or at least, his/her city) changed, and update stats
-		if s.patientsBefore[patientAfter.Id].Address[0].City != "" && s.patientsBefore[patientAfter.Id].Address[0].City != patientAfter.Address[0].City {
+		if oldPatient.Address[0].City != "" && oldPatient.Address[0].City != newPatient.Address[0].City {
 
 			var err error
 
-			err = s.DataAccess.RemovePatientStat(s.patientsBefore[patientAfter.Id])
-			delete(s.patientsBefore, patientAfter.Id)
-
+			err = s.DataAccess.RemovePatientStat(oldPatient)
 			if err != nil {
 				log.Printf("PatientStatsUpdateInterceptor: After: %s\n", err.Error())
 				return
 			}
 
-			err = s.DataAccess.AddPatientStat(patientAfter)
+			err = s.DataAccess.AddPatientStat(newPatient)
 			if err != nil {
 				log.Printf("PatientStatsUpdateInterceptor: After: %s\n", err.Error())
 			}
