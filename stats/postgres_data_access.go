@@ -117,7 +117,12 @@ func (da *PgStatsDataAccess) updateStats(patient *models.Patient, op string) (er
 	var ctfp, csfp int
 	countyQuery := fmt.Sprintf("UPDATE synth_ma.synth_county_stats SET pop = pop %s 1, pop_%s = pop_%s %s 1, pop_sm = ((pop %s 1) / sq_mi) WHERE ct_fips = $1 RETURNING ct_fips", symbol, patient.Gender, patient.Gender, symbol, symbol)
 	cousubQuery := fmt.Sprintf("UPDATE synth_ma.synth_cousub_stats SET pop = pop %s 1, pop_%s = pop_%s %s 1, pop_sm = ((pop %s 1) / sq_mi) WHERE cs_fips = $1 RETURNING cs_fips", symbol, patient.Gender, patient.Gender, symbol, symbol)
+
 	err = da.DB.QueryRow(countyQuery, countyfp).Scan(&ctfp)
+	if err != nil {
+		return
+	}
+
 	err = da.DB.QueryRow(cousubQuery, cousubfp).Scan(&csfp)
 	return
 }
@@ -150,7 +155,12 @@ func (da *PgStatsDataAccess) updateFacts(patient *models.Patient, condition *mod
 	var ctfp, csfp int
 	countyQuery := fmt.Sprintf("UPDATE synth_ma.synth_county_facts SET pop = pop %s 1, pop_%s = pop_%s %s 1 WHERE countyfp = $1 AND diseasefp = $2 RETURNING countyfp", symbol, patient.Gender, patient.Gender, symbol)
 	cousubQuery := fmt.Sprintf("UPDATE synth_ma.synth_cousub_facts SET pop = pop %s 1, pop_%s = pop_%s %s 1 WHERE cousubfp = $1 AND diseasefp = $2 RETURNING cousubfp", symbol, patient.Gender, patient.Gender, symbol)
+
 	err = da.DB.QueryRow(countyQuery, countyfp, diseasefp).Scan(&ctfp)
+	if err != nil {
+		return
+	}
+
 	err = da.DB.QueryRow(cousubQuery, cousubfp, diseasefp).Scan(&csfp)
 	return
 }
