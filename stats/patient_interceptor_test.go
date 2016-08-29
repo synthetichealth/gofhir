@@ -57,7 +57,7 @@ func (s *PatientInterceptorTestSuite) TestPatientCreateInterceptor() {
 
 	// Add a patient
 	patient := createPatient("Boston", "male")
-	createInterceptor := &PatientStatsCreateInterceptor{DataAccess: s.da}
+	createInterceptor := NewPatientStatsCreateInterceptor(s.da)
 	s.NotPanics(func() { createInterceptor.After(patient) }, "Should not panic for valid patient")
 
 	// Check that the relevant statistics updated
@@ -80,7 +80,7 @@ func (s *PatientInterceptorTestSuite) TestPatientUpdateInterceptor() {
 	cousubStats, _ = s.getSubdivisionStats(BostonCousubfp)
 
 	patient := createPatient("Boston", "female")
-	updateInterceptor := &PatientStatsUpdateInterceptor{DataAccess: s.da}
+	updateInterceptor := NewPatientStatsUpdateInterceptor(s.da)
 	s.NotPanics(func() { updateInterceptor.Before(patient) }, "Should not panic for valid patient")
 	s.NotPanics(func() { updateInterceptor.After(patient) }, "Should not panic for valid patient")
 
@@ -121,7 +121,7 @@ func (s *PatientInterceptorTestSuite) TestPatientDeleteInterceptor() {
 
 	var countyStats, updatedCountyStats, cousubStats, updatedCousubStats Stats
 	patient := createPatient("Bedford", "female")
-	deleteInterceptor := PatientStatsDeleteInterceptor{DataAccess: s.da}
+	deleteInterceptor := NewPatientStatsDeleteInterceptor(s.da)
 
 	countyStats, _ = s.getCountyStats(BedfordCountyfp)
 	cousubStats, _ = s.getSubdivisionStats(BedfordCousubfp)

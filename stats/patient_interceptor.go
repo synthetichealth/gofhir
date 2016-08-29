@@ -13,6 +13,11 @@ type PatientStatsCreateInterceptor struct {
 	DataAccess StatsDataAccess
 }
 
+// NewPatientStatsCreateInterceptor returns an initialized instance of PatientStatsCreateInterceptor
+func NewPatientStatsCreateInterceptor(pgDataAccess StatsDataAccess) *PatientStatsCreateInterceptor {
+	return &PatientStatsCreateInterceptor{DataAccess: pgDataAccess}
+}
+
 // Before is unused
 func (s *PatientStatsCreateInterceptor) Before(resource interface{}) {}
 
@@ -36,9 +41,16 @@ func (s *PatientStatsCreateInterceptor) OnError(err error, resource interface{})
 type PatientStatsUpdateInterceptor struct {
 	DataAccess StatsDataAccess
 	// The state of the patient before the database update, for comparison after the database update
-	patientBefore *models.Patient
+	patientsBefore map[string]*models.Patient
 	// Tracks if the interceptor failed to cache the patient model before the update
 	cacheError error
+}
+
+// NewPatientStatsUpdateInterceptor returns an initialized instance of PatientStatsUpdateInterceptor
+func NewPatientStatsUpdateInterceptor(pgDataAccess StatsDataAccess) *PatientStatsUpdateInterceptor {
+	interceptor := &PatientStatsUpdateInterceptor{DataAccess: pgDataAccess}
+	interceptor.patientsBefore = make(map[string]*models.Patient)
+	return interceptor
 }
 
 // Before caches a patient resource before it's updated, for comparison after the update.
@@ -46,7 +58,7 @@ func (s *PatientStatsUpdateInterceptor) Before(resource interface{}) {
 	patient, ok := resource.(*models.Patient)
 
 	if ok {
-		s.patientBefore = patient
+		s.patientsBefore[patient.Id] = patient
 	} else {
 		errmsg := "PatientStatsUpdateInterceptor: Before: Failed to cache patient before update"
 		s.cacheError = errors.New(errmsg)
@@ -61,11 +73,13 @@ func (s *PatientStatsUpdateInterceptor) After(resource interface{}) {
 
 	if ok && s.cacheError == nil {
 		// see if the patient's address (or at least, his/her city) changed, and update stats
-		if s.patientBefore.Address[0].City != "" && s.patientBefore.Address[0].City != patientAfter.Address[0].City {
+		if s.patientsBefore[patientAfter.Id].Address[0].City != "" && s.patientsBefore[patientAfter.Id].Address[0].City != patientAfter.Address[0].City {
 
 			var err error
 
-			err = s.DataAccess.RemovePatientStat(s.patientBefore)
+			err = s.DataAccess.RemovePatientStat(s.patientsBefore[patientAfter.Id])
+			delete(s.patientsBefore, patientAfter.Id)
+
 			if err != nil {
 				log.Printf("PatientStatsUpdateInterceptor: After: %s\n", err.Error())
 				return
@@ -86,6 +100,11 @@ func (s *PatientStatsUpdateInterceptor) OnError(err error, resource interface{})
 // and updates the Synthetic Mass population statistics based on that patient's address.
 type PatientStatsDeleteInterceptor struct {
 	DataAccess StatsDataAccess
+}
+
+// NewPatientStatsDeleteInterceptor returns an initialized instance of PatientStatsDeleteInterceptor
+func NewPatientStatsDeleteInterceptor(pgDataAccess StatsDataAccess) *PatientStatsDeleteInterceptor {
+	return &PatientStatsDeleteInterceptor{DataAccess: pgDataAccess}
 }
 
 // Before is unused

@@ -38,9 +38,9 @@ func main() {
 	s := server.NewServer(*mongoHost)
 
 	// Register patient interceptors
-	s.AddInterceptor("Create", "Patient", &stats.PatientStatsCreateInterceptor{DataAccess: da})
-	s.AddInterceptor("Update", "Patient", &stats.PatientStatsUpdateInterceptor{DataAccess: da})
-	s.AddInterceptor("Delete", "Patient", &stats.PatientStatsDeleteInterceptor{DataAccess: da})
+	s.AddInterceptor("Create", "Patient", stats.NewPatientStatsCreateInterceptor(da))
+	s.AddInterceptor("Update", "Patient", stats.NewPatientStatsUpdateInterceptor(da))
+	s.AddInterceptor("Delete", "Patient", stats.NewPatientStatsDeleteInterceptor(da))
 
 	// Register condition interceptors
 	// The condition interceptors also require a mongodb connection
@@ -52,9 +52,9 @@ func main() {
 
 	mdb := session.DB("fhir")
 	mda := server.NewMongoDataAccessLayer(mdb, make(map[string]server.InterceptorList))
-	s.AddInterceptor("Create", "Condition", &stats.ConditionStatsCreateInterceptor{PgDataAccess: da, MongoDataAccess: mda})
-	s.AddInterceptor("Update", "Condition", &stats.ConditionStatsUpdateInterceptor{PgDataAccess: da, MongoDataAccess: mda})
-	s.AddInterceptor("Delete", "Condition", &stats.ConditionStatsDeleteInterceptor{PgDataAccess: da, MongoDataAccess: mda})
+	s.AddInterceptor("Create", "Condition", stats.NewConditionStatsCreateInterceptor(da, mda))
+	s.AddInterceptor("Update", "Condition", stats.NewConditionStatsUpdateInterceptor(da, mda))
+	s.AddInterceptor("Delete", "Condition", stats.NewConditionStatsDeleteInterceptor(da, mda))
 
 	s.Run(server.Config{
 		UseSmartAuth:         false,

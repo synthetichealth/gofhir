@@ -15,6 +15,11 @@ type ConditionStatsCreateInterceptor struct {
 	MongoDataAccess server.DataAccessLayer
 }
 
+// NewConditionStatsCreateInterceptor returns an initialized instance of a ConditionStatsCreateInterceptor
+func NewConditionStatsCreateInterceptor(pgDataAccess StatsDataAccess, mongoDataAccess server.DataAccessLayer) *ConditionStatsCreateInterceptor {
+	return &ConditionStatsCreateInterceptor{PgDataAccess: pgDataAccess, MongoDataAccess: mongoDataAccess}
+}
+
 // Before is unused
 func (s *ConditionStatsCreateInterceptor) Before(resource interface{}) {}
 
@@ -58,9 +63,16 @@ type ConditionStatsUpdateInterceptor struct {
 	PgDataAccess    StatsDataAccess
 	MongoDataAccess server.DataAccessLayer
 	// The state of the condition before the database update, for comparison after the database update
-	conditionBefore *models.Condition
+	conditionsBefore map[string]*models.Condition
 	// Tracks if the interceptor failed to cache the condition model before the update
 	cacheError error
+}
+
+// NewConditionStatsUpdateInterceptor returns an initialized instance of ConditionStatsUpdateInterceptor
+func NewConditionStatsUpdateInterceptor(pgDataAccess StatsDataAccess, mongoDataAccess server.DataAccessLayer) *ConditionStatsUpdateInterceptor {
+	interceptor := &ConditionStatsUpdateInterceptor{PgDataAccess: pgDataAccess, MongoDataAccess: mongoDataAccess}
+	interceptor.conditionsBefore = make(map[string]*models.Condition)
+	return interceptor
 }
 
 // Before caches a condition resource before it's updated, for comparison after the update.
@@ -68,7 +80,7 @@ func (s *ConditionStatsUpdateInterceptor) Before(resource interface{}) {
 	condition, ok := resource.(*models.Condition)
 
 	if ok {
-		s.conditionBefore = condition
+		s.conditionsBefore[condition.Id] = condition
 	} else {
 		errmsg := "ConditionStatsUpdateInterceptor:Before: Failed to cache condition before update"
 		s.cacheError = errors.New(errmsg)
@@ -83,7 +95,7 @@ func (s *ConditionStatsUpdateInterceptor) After(resource interface{}) {
 
 	if ok && s.cacheError == nil {
 		// see if the condition is now abated, so we can stop tracking stats for it
-		if !conditionIsAbated(s.conditionBefore) && conditionIsAbated(condition) {
+		if !conditionIsAbated(s.conditionsBefore[condition.Id]) && conditionIsAbated(condition) {
 
 			if condition.Subject == nil {
 				log.Printf("ConditionStatsUpdateInterceptor: Condition %s has no subject\n", condition.Id)
@@ -99,6 +111,7 @@ func (s *ConditionStatsUpdateInterceptor) After(resource interface{}) {
 
 			patient := result.(*models.Patient)
 			err = s.PgDataAccess.RemoveConditionStat(patient, condition)
+			delete(s.conditionsBefore, condition.Id)
 
 			if err != nil {
 				log.Printf("ConditionStatsUpdateInterceptor: %s\n", err.Error())
@@ -115,6 +128,11 @@ func (s *ConditionStatsUpdateInterceptor) OnError(err error, resource interface{
 type ConditionStatsDeleteInterceptor struct {
 	PgDataAccess    StatsDataAccess
 	MongoDataAccess server.DataAccessLayer
+}
+
+// NewConditionStatsDeleteInterceptor returns an initialized instance of ConditionStatsDeleteInterceptor
+func NewConditionStatsDeleteInterceptor(pgDataAccess StatsDataAccess, mongoDataAccess server.DataAccessLayer) *ConditionStatsDeleteInterceptor {
+	return &ConditionStatsDeleteInterceptor{PgDataAccess: pgDataAccess, MongoDataAccess: mongoDataAccess}
 }
 
 // Before is unused

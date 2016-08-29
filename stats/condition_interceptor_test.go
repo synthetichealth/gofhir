@@ -76,7 +76,7 @@ func (s *ConditionInterceptorTestSuite) TestConditionCreateInterceptor() {
 	patientID, _ := s.mda.Post(patient)
 
 	condition := createConditionWithReferencedPatient(DiabetesSnomedCode, patientID)
-	createInterceptor := &ConditionStatsCreateInterceptor{PgDataAccess: s.da, MongoDataAccess: s.mda}
+	createInterceptor := NewConditionStatsCreateInterceptor(s.da, s.mda)
 	s.NotPanics(func() { createInterceptor.After(condition) }, "Should not panic for valid condition")
 
 	// Check that the relevant statistics updated
@@ -126,7 +126,7 @@ func (s *ConditionInterceptorTestSuite) TestConditionUpdateInterceptor() {
 	condition := createConditionWithReferencedPatient(DiabetesSnomedCode, patientID)
 	updatedCondition := createAbatedConditionWithReferencedPatient(DiabetesSnomedCode, patientID)
 
-	updateInterceptor := &ConditionStatsUpdateInterceptor{PgDataAccess: s.da, MongoDataAccess: s.mda}
+	updateInterceptor := NewConditionStatsUpdateInterceptor(s.da, s.mda)
 	s.NotPanics(func() { updateInterceptor.Before(condition) }, "Should not panic for valid condition")
 	s.NotPanics(func() { updateInterceptor.After(updatedCondition) }, "Should not panic for valid condition")
 
@@ -180,7 +180,7 @@ func (s *ConditionInterceptorTestSuite) TestConditionDeleteInterceptor() {
 	patient := createPatient("Boston", "male")
 	patientID, _ := s.mda.Post(patient)
 	condition := createConditionWithReferencedPatient(DiabetesSnomedCode, patientID)
-	deleteInterceptor := &ConditionStatsDeleteInterceptor{PgDataAccess: s.da, MongoDataAccess: s.mda}
+	deleteInterceptor := NewConditionStatsDeleteInterceptor(s.da, s.mda)
 	s.NotPanics(func() { deleteInterceptor.After(condition) }, "Should not panic for valid condition")
 
 	// Check that the relevant statistics updated
