@@ -85,7 +85,7 @@ func (da *PgStatsDataAccess) AddConditionStat(patient *models.Patient, condition
 	}
 
 	if patientGenderIsValid(patient) {
-		da.updateFacts(countyfp, cousubfp, diseasefp, patient.Gender, "increment")
+		err = da.updateFacts(countyfp, cousubfp, diseasefp, patient.Gender, "increment")
 
 	} else {
 		err = InvalidGenderError
@@ -105,7 +105,7 @@ func (da *PgStatsDataAccess) RemoveConditionStat(patient *models.Patient, condit
 	}
 
 	if patientGenderIsValid(patient) {
-		da.updateFacts(countyfp, cousubfp, diseasefp, patient.Gender, "decrement")
+		err = da.updateFacts(countyfp, cousubfp, diseasefp, patient.Gender, "decrement")
 
 	} else {
 		err = InvalidGenderError
