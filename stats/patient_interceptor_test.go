@@ -10,11 +10,6 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-const (
-	BedfordCountyfp = "017"
-	BedfordCousubfp = "04615"
-)
-
 type PatientInterceptorTestSuite struct {
 	suite.Suite
 	db *sql.DB
