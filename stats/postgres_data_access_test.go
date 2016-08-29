@@ -52,7 +52,7 @@ func (s *StatsTestSuite) TearDownSuite() {
 	s.db.Close()
 }
 
-func TestStatsSuite(t *testing.T) {
+func TestPostgresDataAccess(t *testing.T) {
 	// bind test suite to go test
 	suite.Run(t, new(StatsTestSuite))
 }
