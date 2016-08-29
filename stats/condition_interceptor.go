@@ -2,10 +2,13 @@ package stats
 
 import (
 	"log"
+	"sync"
 
 	"github.com/intervention-engine/fhir/models"
 	"github.com/intervention-engine/fhir/server"
 )
+
+var conditionLock = sync.RWMutex{}
 
 // ConditionStatsCreateInterceptor intercepts any new condition resources added to the database
 // and updates the Synthetic Mass condition statistics based on the condition's patient's address.
@@ -77,7 +80,9 @@ func (s *ConditionStatsUpdateInterceptor) Before(resource interface{}) {
 	condition, ok := resource.(*models.Condition)
 
 	if ok {
+		conditionLock.Lock()
 		s.conditionsBefore[condition.Id] = condition
+		conditionLock.Unlock()
 	} else {
 		log.Println("ConditionStatsUpdateInterceptor:Before: Failed to cache condition before update")
 	}
@@ -90,7 +95,9 @@ func (s *ConditionStatsUpdateInterceptor) After(resource interface{}) {
 
 	if ok {
 
+		conditionLock.RLock()
 		oldCondition, found := s.conditionsBefore[newCondition.Id]
+		conditionLock.RUnlock()
 
 		if !found {
 			log.Println("ConditionStatsUpdateInterceptor: After: Could not find cached condition")
@@ -98,7 +105,9 @@ func (s *ConditionStatsUpdateInterceptor) After(resource interface{}) {
 		}
 
 		// free up memory
+		conditionLock.Lock()
 		delete(s.conditionsBefore, oldCondition.Id)
+		conditionLock.Unlock()
 
 		// see if the condition is now abated, so we can stop tracking stats for it
 		if !conditionIsAbated(oldCondition) && conditionIsAbated(newCondition) {

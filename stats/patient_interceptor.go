@@ -2,9 +2,12 @@ package stats
 
 import (
 	"log"
+	"sync"
 
 	"github.com/intervention-engine/fhir/models"
 )
+
+var patientLock = sync.RWMutex{}
 
 // PatientStatsCreateInterceptor intercepts any new patient resources added to the database
 // and updates the Synthetic Mass population statistics based on that patient's address.
@@ -55,7 +58,9 @@ func (s *PatientStatsUpdateInterceptor) Before(resource interface{}) {
 	patient, ok := resource.(*models.Patient)
 
 	if ok {
+		patientLock.Lock()
 		s.patientsBefore[patient.Id] = patient
+		patientLock.Unlock()
 	} else {
 		log.Println("PatientStatsUpdateInterceptor: Before: Failed to cache patient before update")
 	}
@@ -67,7 +72,9 @@ func (s *PatientStatsUpdateInterceptor) After(resource interface{}) {
 	newPatient, ok := resource.(*models.Patient)
 
 	if ok {
+		patientLock.RLock()
 		oldPatient, found := s.patientsBefore[newPatient.Id]
+		patientLock.RUnlock()
 
 		if !found {
 			log.Println("PatientStatsUpdateInterceptor: After: Could not find cached patient")
@@ -75,7 +82,9 @@ func (s *PatientStatsUpdateInterceptor) After(resource interface{}) {
 		}
 
 		// delete it from the map to prevent unnecessary use of memory
+		patientLock.Lock()
 		delete(s.patientsBefore, oldPatient.Id)
+		patientLock.Unlock()
 
 		// see if the patient's address (or at least, his/her city) changed, and update stats
 		if oldPatient.Address[0].City != "" && oldPatient.Address[0].City != newPatient.Address[0].City {
