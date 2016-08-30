@@ -89,13 +89,15 @@ psql -d fhir <<EOF
 INSERT INTO synth_ma.synth_county_facts(countyfp, diseasefp, pop, pop_male, pop_female, rate)
 SELECT c.countyfp, d.diseasefp, 0, 0, 0, 0
 FROM tiger_cb14_500k.county AS c 
-CROSS JOIN synth_ma.synth_disease AS d;
+CROSS JOIN synth_ma.synth_disease AS d
+WHERE c.statefp = '25' AND c.countyfp != '000'; 
 
 -- Populate the cousub fact table
 INSERT INTO synth_ma.synth_cousub_facts(cousubfp, diseasefp, pop, pop_male, pop_female, rate)
 SELECT c.cousubfp, d.diseasefp, 0, 0, 0, 0
 FROM tiger.cousub AS c 
-CROSS JOIN synth_ma.synth_disease AS d;
+CROSS JOIN synth_ma.synth_disease AS d
+WHERE c.cousubfp != '000';
 EOF
 
 echo "Cleaning up..."
