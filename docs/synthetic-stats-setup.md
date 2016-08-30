@@ -1,5 +1,5 @@
-Migration to GoFHIR
-===================
+Setup Synthetic Stats
+=====================
 
 Clone GoFHIR Server Code
 ------------------------
