@@ -137,23 +137,23 @@ EOF
 # Query:
 # SELECT gid, statefp, countyfp, countyns, statefp || countyfp as cntyidfp, name, lsad, aland, awater, the_geom
 # FROM tiger_cb14_500k.county WHERE statefp = '25';
-cat $PWD/data/county.csv | psql -d fhir_test -c "\COPY tiger.county (gid, statefp, countyfp, countyns, cntyidfp, name, lsad, aland, awater, the_geom) FROM STDIN (DELIMITER ',', QUOTE '\"', HEADER TRUE, FORMAT CSV)"
+cat $PWD/../data/county.csv | psql -d fhir_test -c "\COPY tiger.county (gid, statefp, countyfp, countyns, cntyidfp, name, lsad, aland, awater, the_geom) FROM STDIN (DELIMITER ',', QUOTE '\"', HEADER TRUE, FORMAT CSV)"
 
 # Cousub Tiger Data
 # From: tiger_cb14_500k.cousub
 # Query:
 # SELECT gid, statefp, countyfp, cousubfp, cousubns, statefp || countyfp || cousubfp as cosbidfp, name, lsad, aland, awater, the_geom
 #  FROM tiger_cb14_500k.cousub WHERE statefp = '25';
-cat $PWD/data/cousub.csv | psql -d fhir_test -c "\COPY tiger.cousub (gid, statefp, countyfp, cousubfp, cousubns, cosbidfp, name, lsad, aland, awater, the_geom) FROM STDIN (DELIMITER ',', QUOTE '\"', HEADER TRUE, FORMAT CSV)"
+cat $PWD/../data/cousub.csv | psql -d fhir_test -c "\COPY tiger.cousub (gid, statefp, countyfp, cousubfp, cousubns, cosbidfp, name, lsad, aland, awater, the_geom) FROM STDIN (DELIMITER ',', QUOTE '\"', HEADER TRUE, FORMAT CSV)"
 
 # Synthetic County Statistics
-cat $PWD/data/synth_county_stats.csv | psql -d fhir_test -c "\COPY synth_ma.synth_county_stats (ct_name, ct_fips, sq_mi, pop, pop_male, pop_female, pop_sm, ct_poly, ct_pnt) FROM STDIN (DELIMITER ',', QUOTE '\"', HEADER TRUE, FORMAT CSV)"
+cat $PWD/../data/synth_county_stats.csv | psql -d fhir_test -c "\COPY synth_ma.synth_county_stats (ct_name, ct_fips, sq_mi, pop, pop_male, pop_female, pop_sm, ct_poly, ct_pnt) FROM STDIN (DELIMITER ',', QUOTE '\"', HEADER TRUE, FORMAT CSV)"
 
 # Synthetic Subdivision Statistics
-cat $PWD/data/synth_cousub_stats.csv | psql -d fhir_test -c "\COPY synth_ma.synth_cousub_stats (ct_name, ct_fips, cs_name, cs_fips, sq_mi, pop, pop_male, pop_female, pop_sm, cs_poly, cs_pnt) FROM STDIN (DELIMITER ',', QUOTE '\"', HEADER TRUE, FORMAT CSV)"
+cat $PWD/../data/synth_cousub_stats.csv | psql -d fhir_test -c "\COPY synth_ma.synth_cousub_stats (ct_name, ct_fips, cs_name, cs_fips, sq_mi, pop, pop_male, pop_female, pop_sm, cs_poly, cs_pnt) FROM STDIN (DELIMITER ',', QUOTE '\"', HEADER TRUE, FORMAT CSV)"
 
 # Disease Data
-cat $PWD/data/disease.csv | psql -d fhir_test -c "\COPY synth_ma.synth_disease (diseasefp, stat_name, condition_name, code_icd9, code_icd10, code_snomed) FROM STDIN (DELIMITER ',', QUOTE '\"', HEADER TRUE, FORMAT CSV)"
+cat $PWD/../data/disease.csv | psql -d fhir_test -c "\COPY synth_ma.synth_disease (diseasefp, stat_name, condition_name, code_icd9, code_icd10, code_snomed) FROM STDIN (DELIMITER ',', QUOTE '\"', HEADER TRUE, FORMAT CSV)"
 
 # Populate the fact tables with zeroed stats data.
 # This is every permutation of county/cousub ID and disease ID.
