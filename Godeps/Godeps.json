@@ -24,18 +24,23 @@
 		},
 		{
 			"ImportPath": "github.com/intervention-engine/fhir/models",
-			"Comment": "DSTU1-208-g5d400ec",
-			"Rev": "5d400ec16f548ddfe0c5dc00fbc6159d9aa53d60"
+			"Comment": "DSTU1-211-g3693452",
+			"Rev": "369345261771d2d1191300d178dabd75c2158794"
 		},
 		{
 			"ImportPath": "github.com/intervention-engine/fhir/search",
-			"Comment": "DSTU1-208-g5d400ec",
-			"Rev": "5d400ec16f548ddfe0c5dc00fbc6159d9aa53d60"
+			"Comment": "DSTU1-211-g3693452",
+			"Rev": "369345261771d2d1191300d178dabd75c2158794"
 		},
 		{
 			"ImportPath": "github.com/intervention-engine/fhir/server",
-			"Comment": "DSTU1-208-g5d400ec",
-			"Rev": "5d400ec16f548ddfe0c5dc00fbc6159d9aa53d60"
+			"Comment": "DSTU1-211-g3693452",
+			"Rev": "369345261771d2d1191300d178dabd75c2158794"
+		},
+		{
+			"ImportPath": "github.com/itsjamie/gin-cors",
+			"Comment": "1.0.0",
+			"Rev": "97b4a9da79331dfa2b6d35f4cdd1e50f5148859c"
 		},
 		{
 			"ImportPath": "github.com/lib/pq",
