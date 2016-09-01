@@ -38,6 +38,13 @@ func (s *PatientInterceptorTestSuite) SetupSuite() {
 }
 
 func (s *PatientInterceptorTestSuite) TearDownSuite() {
+
+	// zero out the stats for the next test
+	_, _ = s.db.Query("UPDATE synth_ma.synth_county_stats SET pop = 0, pop_male = 0, pop_female = 0, pop_sm = 0;")
+	_, _ = s.db.Query("UPDATE synth_ma.synth_cousub_stats SET pop = 0, pop_male = 0, pop_female = 0, pop_sm = 0;")
+	_, _ = s.db.Query("UPDATE synth_ma.synth_county_facts SET pop = 0, pop_male = 0, pop_female = 0, rate = 0;")
+	_, _ = s.db.Query("UPDATE synth_ma.synth_cousub_facts SET pop = 0, pop_male = 0, pop_female = 0, rate = 0;")
+
 	// close the db connection after testing is finished
 	s.db.Close()
 }

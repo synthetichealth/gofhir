@@ -18,6 +18,7 @@ var ErrInvalidGender = errors.New("Invalid gender")
 var ErrInvalidUpdateOperation = errors.New("Invalid update operation")
 var ErrNoAddress = errors.New("No address found")
 var ErrNoSnomedCode = errors.New("No snomed code found")
+var ErrDiseaseNotTracked = errors.New("Statistics for the disease are not tracked")
 
 // StatsDataAccess is the top level interface for interacting with Synthetic Mass statistics
 type StatsDataAccess interface {
@@ -25,6 +26,7 @@ type StatsDataAccess interface {
 	RemovePatientStat(patient *models.Patient) error
 	AddConditionStat(patient *models.Patient, condition *models.Condition) error
 	RemoveConditionStat(patient *models.Patient, condition *models.Condition) error
+	ConditionIsTracked(condition *models.Condition) bool
 }
 
 // PgStatsDataAccess implements the StatsDataAccess interface using a Postgres database.
@@ -65,6 +67,17 @@ func (da *PgStatsDataAccess) RemoveConditionStat(patient *models.Patient, condit
 	return da.updateFacts(patient, condition, "decrement")
 }
 
+// ConditionIsTracked indicates whether or not statistics are tracked for the current condition.
+func (da *PgStatsDataAccess) ConditionIsTracked(condition *models.Condition) bool {
+
+	diseasefp, err := da.identifyDiseaseForCondition(condition)
+
+	if err == nil && diseasefp != "" {
+		return true
+	}
+	return false
+}
+
 // identifyCountyAndSubdivisionForPatient returns the countyfp and cousubfp that
 // match the subdivision in the given patient's address.
 func (da *PgStatsDataAccess) identifyCountyAndSubdivisionForPatient(patient *models.Patient) (countyfp, cousubfp string, err error) {
@@ -86,7 +99,26 @@ func (da *PgStatsDataAccess) identifyDiseaseForCondition(condition *models.Condi
 		return "", ErrNoSnomedCode
 	}
 	err = da.DB.QueryRow("SELECT diseasefp FROM synth_ma.synth_disease WHERE code_snomed = $1", snomedCode).Scan(&diseasefp)
+
+	if err == sql.ErrNoRows {
+		return "", ErrDiseaseNotTracked
+	}
 	return
+}
+
+func (da *PgStatsDataAccess) getCountyAndSubdivisionPopulations(countyfp, cousubfp string) (int64, int64, error) {
+
+	var countyPop, cousubPop int64
+	var err error
+
+	err = da.DB.QueryRow("SELECT pop FROM synth_ma.synth_county_stats WHERE ct_fips = $1", countyfp).Scan(&countyPop)
+
+	if err != nil {
+		return 0, 0, err
+	}
+
+	err = da.DB.QueryRow("SELECT pop FROM synth_ma.synth_cousub_stats WHERE cs_fips = $1", cousubfp).Scan(&cousubPop)
+	return countyPop, cousubPop, err
 }
 
 // updateStats increments or decrements a row of population counts in the county and subdivision stats tables.
@@ -154,8 +186,19 @@ func (da *PgStatsDataAccess) updateFacts(patient *models.Patient, condition *mod
 	}
 
 	var ctfp, csfp int
-	countyQuery := fmt.Sprintf("UPDATE synth_ma.synth_county_facts SET pop = pop %s 1, pop_%s = pop_%s %s 1 WHERE countyfp = $1 AND diseasefp = $2 RETURNING countyfp", symbol, patient.Gender, patient.Gender, symbol)
-	cousubQuery := fmt.Sprintf("UPDATE synth_ma.synth_cousub_facts SET pop = pop %s 1, pop_%s = pop_%s %s 1 WHERE cousubfp = $1 AND diseasefp = $2 RETURNING cousubfp", symbol, patient.Gender, patient.Gender, symbol)
+	countyQuery := fmt.Sprintf(`
+	UPDATE synth_ma.synth_county_facts AS f
+	SET pop = f.pop %s 1, pop_%s = f.pop_%s %s 1, rate = (CASE WHEN s.pop > 0 THEN (f.pop %s 1) / s.pop ELSE 0 END)
+	FROM synth_ma.synth_county_stats AS s
+	WHERE f.countyfp = s.ct_fips AND f.countyfp = $1 AND f.diseasefp = $2 RETURNING f.countyfp
+	`, symbol, patient.Gender, patient.Gender, symbol, symbol)
+
+	cousubQuery := fmt.Sprintf(`
+	UPDATE synth_ma.synth_cousub_facts AS f 
+	SET pop = f.pop %s 1, pop_%s = f.pop_%s %s 1, rate = (CASE WHEN s.pop > 0 THEN (f.pop %s 1) / s.pop ELSE 0 END)
+	FROM synth_ma.synth_cousub_stats AS s 
+	WHERE f.cousubfp = s.cs_fips AND f.cousubfp = $1 AND f.diseasefp = $2 RETURNING f.cousubfp
+	`, symbol, patient.Gender, patient.Gender, symbol, symbol)
 
 	err = da.DB.QueryRow(countyQuery, countyfp, diseasefp).Scan(&ctfp)
 	if err != nil {

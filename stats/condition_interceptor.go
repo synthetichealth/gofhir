@@ -33,6 +33,11 @@ func (s *ConditionStatsCreateInterceptor) After(resource interface{}) {
 
 		var err error
 
+		// We don't want to compute statistics for conditions we don't track
+		if !s.PgDataAccess.ConditionIsTracked(condition) {
+			return
+		}
+
 		if condition.Subject == nil {
 			log.Printf("ConditionStatsCreateInterceptor: Condition %s has no subject\n", condition.Id)
 			return
