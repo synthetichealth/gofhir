@@ -28,6 +28,7 @@ type Stats struct {
 
 type Facts struct {
 	Pop, PopMale, PopFemale int64
+	Rate                    float64
 }
 
 type StatsTestSuite struct {
@@ -56,6 +57,10 @@ func (s *StatsTestSuite) SetupSuite() {
 }
 
 func (s *StatsTestSuite) TearDownSuite() {
+
+	// zero out the stats for the next test
+	s.resetStats()
+
 	// close the db connection after testing is finished
 	s.db.Close()
 }
@@ -88,6 +93,8 @@ func (s *StatsTestSuite) TestAddMalePatientStat() {
 	updatedCousubStats, _ = s.getSubdivisionStats(BostonCousubfp)
 	s.assertCountyStatsChanged(countyStats, updatedCountyStats, 1, 0)
 	s.assertSubdivisionStatsChanged(cousubStats, updatedCousubStats, 1, 0)
+
+	s.resetStats()
 }
 
 func (s *StatsTestSuite) TestAddFemalePatientStat() {
@@ -109,6 +116,8 @@ func (s *StatsTestSuite) TestAddFemalePatientStat() {
 	updatedCousubStats, _ = s.getSubdivisionStats(BostonCousubfp)
 	s.assertCountyStatsChanged(countyStats, updatedCountyStats, 0, 1)
 	s.assertSubdivisionStatsChanged(cousubStats, updatedCousubStats, 0, 1)
+
+	s.resetStats()
 }
 
 func (s *StatsTestSuite) TestRemoveMalePatientStat() {
@@ -116,12 +125,15 @@ func (s *StatsTestSuite) TestRemoveMalePatientStat() {
 	var err error
 	var countyStats, updatedCountyStats, cousubStats, updatedCousubStats Stats
 
+	// Add a male patient
+	patient := createPatient("Boston", "male")
+	s.da.AddPatientStat(patient)
+
 	// Get initial stats for comparison
 	countyStats, _ = s.getCountyStats(BostonCountyfp)
 	cousubStats, _ = s.getSubdivisionStats(BostonCousubfp)
 
 	// Remove a male patient
-	patient := createPatient("Boston", "male")
 	s.NotPanics(func() { err = s.da.RemovePatientStat(patient) }, "AddPatientStat should not panic for a valid male patient")
 	s.Nil(err, "AddPatientStat should not fail for a valid male patient")
 
@@ -130,6 +142,8 @@ func (s *StatsTestSuite) TestRemoveMalePatientStat() {
 	updatedCousubStats, _ = s.getSubdivisionStats(BostonCousubfp)
 	s.assertCountyStatsChanged(countyStats, updatedCountyStats, -1, 0)
 	s.assertSubdivisionStatsChanged(cousubStats, updatedCousubStats, -1, 0)
+
+	s.resetStats()
 }
 
 func (s *StatsTestSuite) TestRemoveFemalePatientStat() {
@@ -137,12 +151,15 @@ func (s *StatsTestSuite) TestRemoveFemalePatientStat() {
 	var err error
 	var countyStats, updatedCountyStats, cousubStats, updatedCousubStats Stats
 
+	// Add a female patient
+	patient := createPatient("Boston", "female")
+	s.da.AddPatientStat(patient)
+
 	// Get initial stats for comparison
 	countyStats, _ = s.getCountyStats(BostonCountyfp)
 	cousubStats, _ = s.getSubdivisionStats(BostonCousubfp)
 
 	// Remove a female patient
-	patient := createPatient("Boston", "female")
 	s.NotPanics(func() { err = s.da.RemovePatientStat(patient) }, "AddPatientStat should not panic for a valid male patient")
 	s.Nil(err, "AddPatientStat should not fail for a valid male patient")
 
@@ -151,6 +168,8 @@ func (s *StatsTestSuite) TestRemoveFemalePatientStat() {
 	updatedCousubStats, _ = s.getSubdivisionStats(BostonCousubfp)
 	s.assertCountyStatsChanged(countyStats, updatedCountyStats, 0, -1)
 	s.assertSubdivisionStatsChanged(cousubStats, updatedCousubStats, 0, -1)
+
+	s.resetStats()
 }
 
 func (s *StatsTestSuite) TestAddPatientStatInvalidGender() {
@@ -205,6 +224,7 @@ func (s *StatsTestSuite) TestAddMaleWithConditionStat() {
 	var countyFacts, updatedCountyFacts, cousubFacts, updatedCousubFacts Facts
 
 	patient := createPatient("Bedford", "male")
+	_ = s.da.AddPatientStat(patient)
 	condition := createCondition(DiabetesSnomedCode)
 
 	countyFacts, _ = s.getCountyFacts(BedfordCountyfp, Diabetesfp)
@@ -213,8 +233,10 @@ func (s *StatsTestSuite) TestAddMaleWithConditionStat() {
 	s.Nil(err, "AddConditionStat should not fail for a valid male patient and condition")
 	updatedCountyFacts, _ = s.getCountyFacts(BedfordCountyfp, Diabetesfp)
 	updatedCousubFacts, _ = s.getCousubFacts(BedfordCousubfp, Diabetesfp)
-	s.assertCountyFactsChanged(countyFacts, updatedCountyFacts, 1, 0)
-	s.assertSubdivisionFactsChanged(cousubFacts, updatedCousubFacts, 1, 0)
+	s.assertCountyFactsChanged(BedfordCountyfp, countyFacts, updatedCountyFacts, 1, 0)
+	s.assertSubdivisionFactsChanged(BedfordCousubfp, cousubFacts, updatedCousubFacts, 1, 0)
+
+	s.resetStats()
 }
 
 func (s *StatsTestSuite) TestAddFemaleWithConditionStat() {
@@ -223,6 +245,7 @@ func (s *StatsTestSuite) TestAddFemaleWithConditionStat() {
 	var countyFacts, updatedCountyFacts, cousubFacts, updatedCousubFacts Facts
 
 	patient := createPatient("Bedford", "female")
+	_ = s.da.AddPatientStat(patient)
 	condition := createCondition(DiabetesSnomedCode)
 
 	countyFacts, _ = s.getCountyFacts(BedfordCountyfp, Diabetesfp)
@@ -231,8 +254,10 @@ func (s *StatsTestSuite) TestAddFemaleWithConditionStat() {
 	s.Nil(err, "AddConditionStat should not fail for a valid female patient and condition")
 	updatedCountyFacts, _ = s.getCountyFacts(BedfordCountyfp, Diabetesfp)
 	updatedCousubFacts, _ = s.getCousubFacts(BedfordCousubfp, Diabetesfp)
-	s.assertCountyFactsChanged(countyFacts, updatedCountyFacts, 0, 1)
-	s.assertSubdivisionFactsChanged(cousubFacts, updatedCousubFacts, 0, 1)
+	s.assertCountyFactsChanged(BedfordCountyfp, countyFacts, updatedCountyFacts, 0, 1)
+	s.assertSubdivisionFactsChanged(BedfordCousubfp, cousubFacts, updatedCousubFacts, 0, 1)
+
+	s.resetStats()
 }
 
 func (s *StatsTestSuite) TestRemoveMaleWithConditionStat() {
@@ -240,8 +265,14 @@ func (s *StatsTestSuite) TestRemoveMaleWithConditionStat() {
 	var err error
 	var countyFacts, updatedCountyFacts, cousubFacts, updatedCousubFacts Facts
 
+	// create two patients to augment county/cousub stats
 	patient := createPatient("Bedford", "male")
+	_ = s.da.AddPatientStat(patient)
+	_ = s.da.AddPatientStat(patient)
+
+	// create a condition stat
 	condition := createCondition(DiabetesSnomedCode)
+	_ = s.da.AddConditionStat(patient, condition)
 
 	countyFacts, _ = s.getCountyFacts(BedfordCountyfp, Diabetesfp)
 	cousubFacts, _ = s.getCousubFacts(BedfordCousubfp, Diabetesfp)
@@ -249,8 +280,10 @@ func (s *StatsTestSuite) TestRemoveMaleWithConditionStat() {
 	s.Nil(err, "AddConditionStat should not fail for a valid male patient and condition")
 	updatedCountyFacts, _ = s.getCountyFacts(BedfordCountyfp, Diabetesfp)
 	updatedCousubFacts, _ = s.getCousubFacts(BedfordCousubfp, Diabetesfp)
-	s.assertCountyFactsChanged(countyFacts, updatedCountyFacts, -1, 0)
-	s.assertSubdivisionFactsChanged(cousubFacts, updatedCousubFacts, -1, 0)
+	s.assertCountyFactsChanged(BedfordCountyfp, countyFacts, updatedCountyFacts, -1, 0)
+	s.assertSubdivisionFactsChanged(BedfordCousubfp, cousubFacts, updatedCousubFacts, -1, 0)
+
+	s.resetStats()
 }
 
 func (s *StatsTestSuite) TestRemoveFemaleWithConditionStat() {
@@ -259,7 +292,11 @@ func (s *StatsTestSuite) TestRemoveFemaleWithConditionStat() {
 	var countyFacts, updatedCountyFacts, cousubFacts, updatedCousubFacts Facts
 
 	patient := createPatient("Bedford", "female")
+	_ = s.da.AddPatientStat(patient)
+	_ = s.da.AddPatientStat(patient)
+
 	condition := createCondition(DiabetesSnomedCode)
+	_ = s.da.AddConditionStat(patient, condition)
 
 	countyFacts, _ = s.getCountyFacts(BedfordCountyfp, Diabetesfp)
 	cousubFacts, _ = s.getCousubFacts(BedfordCousubfp, Diabetesfp)
@@ -267,8 +304,10 @@ func (s *StatsTestSuite) TestRemoveFemaleWithConditionStat() {
 	s.Nil(err, "AddConditionStat should not fail for a valid female patient and condition")
 	updatedCountyFacts, _ = s.getCountyFacts(BedfordCountyfp, Diabetesfp)
 	updatedCousubFacts, _ = s.getCousubFacts(BedfordCousubfp, Diabetesfp)
-	s.assertCountyFactsChanged(countyFacts, updatedCountyFacts, 0, -1)
-	s.assertSubdivisionFactsChanged(cousubFacts, updatedCousubFacts, 0, -1)
+	s.assertCountyFactsChanged(BedfordCountyfp, countyFacts, updatedCountyFacts, 0, -1)
+	s.assertSubdivisionFactsChanged(BedfordCousubfp, cousubFacts, updatedCousubFacts, 0, -1)
+
+	s.resetStats()
 }
 
 func (s *StatsTestSuite) TestAddConditionStatInvalidGender() {
@@ -285,8 +324,10 @@ func (s *StatsTestSuite) TestAddConditionStatInvalidGender() {
 	s.NotNil(err, "AddConditionStat should fail for an invalid patient gender")
 	updatedCountyFacts, _ = s.getCountyFacts(BedfordCountyfp, Diabetesfp)
 	updatedCousubFacts, _ = s.getCousubFacts(BedfordCousubfp, Diabetesfp)
-	s.assertCountyFactsChanged(countyFacts, updatedCountyFacts, 0, 0)
-	s.assertSubdivisionFactsChanged(cousubFacts, updatedCousubFacts, 0, 0)
+	s.assertCountyFactsChanged(BedfordCountyfp, countyFacts, updatedCountyFacts, 0, 0)
+	s.assertSubdivisionFactsChanged(BedfordCousubfp, cousubFacts, updatedCousubFacts, 0, 0)
+
+	s.resetStats()
 }
 
 func (s *StatsTestSuite) TestRemoveConditionStatInvalidGender() {
@@ -303,8 +344,8 @@ func (s *StatsTestSuite) TestRemoveConditionStatInvalidGender() {
 	s.NotNil(err, "RemoveConditionStat should fail for an invalid patient gender")
 	updatedCountyFacts, _ = s.getCountyFacts(BedfordCountyfp, Diabetesfp)
 	updatedCousubFacts, _ = s.getCousubFacts(BedfordCousubfp, Diabetesfp)
-	s.assertCountyFactsChanged(countyFacts, updatedCountyFacts, 0, 0)
-	s.assertSubdivisionFactsChanged(cousubFacts, updatedCousubFacts, 0, 0)
+	s.assertCountyFactsChanged(BedfordCountyfp, countyFacts, updatedCountyFacts, 0, 0)
+	s.assertSubdivisionFactsChanged(BedfordCousubfp, cousubFacts, updatedCousubFacts, 0, 0)
 }
 
 func (s *StatsTestSuite) TestAddAndRemoveConditionStatInvalidCity() {
@@ -333,6 +374,18 @@ func (s *StatsTestSuite) TestAddAndRemoveConditionStatUntrackedDisease() {
 	s.NotNil(err, "RemoveConditionStat should fail for an untracked condition")
 }
 
+func (s *StatsTestSuite) TestConditionIsTracked() {
+
+	var isTracked bool
+
+	condition := createCondition(DiabetesSnomedCode)
+	s.NotPanics(func() { isTracked = s.da.ConditionIsTracked(condition) }, "ConditionIsTracked should not panic for a tracked condition")
+	s.Equal(true, isTracked, "Diabetes should be identified as a tracked condition")
+	condition = createCondition(UntrackedSnomedCode)
+	s.NotPanics(func() { isTracked = s.da.ConditionIsTracked(condition) }, "ConditionIsTracked should not panic for an untracked condition")
+	s.Equal(false, isTracked, "'00000000' should be identified as an untracked condition")
+}
+
 func (s *StatsTestSuite) getCountyStats(countyfp string) (stats Stats, err error) {
 	query := "SELECT pop, pop_male, pop_female, pop_sm, sq_mi FROM synth_ma.synth_county_stats WHERE ct_fips = $1"
 	err = s.db.QueryRow(query, countyfp).Scan(&stats.Pop, &stats.PopMale, &stats.PopFemale, &stats.PopPerSqMile, &stats.SqMiles)
@@ -346,14 +399,26 @@ func (s *StatsTestSuite) getSubdivisionStats(cousubfp string) (stats Stats, err 
 }
 
 func (s *StatsTestSuite) getCountyFacts(countyfp, diseasefp string) (facts Facts, err error) {
-	query := "SELECT pop, pop_male, pop_female FROM synth_ma.synth_county_facts WHERE countyfp = $1 AND diseasefp = $2"
-	err = s.db.QueryRow(query, countyfp, diseasefp).Scan(&facts.Pop, &facts.PopMale, &facts.PopFemale)
+	query := "SELECT pop, pop_male, pop_female, rate FROM synth_ma.synth_county_facts WHERE countyfp = $1 AND diseasefp = $2"
+	err = s.db.QueryRow(query, countyfp, diseasefp).Scan(&facts.Pop, &facts.PopMale, &facts.PopFemale, &facts.Rate)
 	return
 }
 
 func (s *StatsTestSuite) getCousubFacts(cousubfp, diseasefp string) (facts Facts, err error) {
-	query := "SELECT pop, pop_male, pop_female FROM synth_ma.synth_cousub_facts WHERE cousubfp = $1 AND diseasefp = $2"
-	err = s.db.QueryRow(query, cousubfp, diseasefp).Scan(&facts.Pop, &facts.PopMale, &facts.PopFemale)
+	query := "SELECT pop, pop_male, pop_female, rate FROM synth_ma.synth_cousub_facts WHERE cousubfp = $1 AND diseasefp = $2"
+	err = s.db.QueryRow(query, cousubfp, diseasefp).Scan(&facts.Pop, &facts.PopMale, &facts.PopFemale, &facts.Rate)
+	return
+}
+
+func (s *StatsTestSuite) getCountyPopulation(countyfp string) (pop int64, err error) {
+	query := "SELECT pop FROM synth_ma.synth_county_stats WHERE ct_fips = $1"
+	err = s.db.QueryRow(query, countyfp).Scan(&pop)
+	return
+}
+
+func (s *StatsTestSuite) getSubdivisionPopulation(cousubfp string) (pop int64, err error) {
+	query := "SELECT pop FROM synth_ma.synth_cousub_stats WHERE cs_fips = $1"
+	err = s.db.QueryRow(query, cousubfp).Scan(&pop)
 	return
 }
 
@@ -373,16 +438,54 @@ func (s *StatsTestSuite) assertSubdivisionStatsChanged(cousub, ucousub Stats, ma
 	s.Equal(newPopPerSqMile, ucousub.PopPerSqMile, fmt.Sprintf("Subdivision PopPerSqMile should now be %.8f", newPopPerSqMile))
 }
 
-func (s *StatsTestSuite) assertCountyFactsChanged(county, ucounty Facts, maleDelta, femaleDelta int64) {
+func (s *StatsTestSuite) assertCountyFactsChanged(countyfp string, county, ucounty Facts, maleDelta, femaleDelta int64) {
 	s.Equal(county.Pop+(maleDelta+femaleDelta), ucounty.Pop, fmt.Sprintf("County population should change by %d", maleDelta+femaleDelta))
 	s.Equal(county.PopMale+maleDelta, ucounty.PopMale, fmt.Sprintf("County male population should change by %d", maleDelta))
 	s.Equal(county.PopFemale+femaleDelta, ucounty.PopFemale, fmt.Sprintf("County female population should change by %d", femaleDelta))
+
+	// recompute rate for comparison, using total county population
+	var newRate float64
+	countyPop, _ := s.getCountyPopulation(countyfp)
+	if countyPop > 0 {
+		newRate = float64(county.Pop+maleDelta+femaleDelta) / float64(countyPop)
+	} else {
+		newRate = 0
+	}
+	s.Equal(newRate, ucounty.Rate, fmt.Sprintf("County disease rate %.3f should have updated to %.3f", ucounty.Rate, newRate))
 }
 
-func (s *StatsTestSuite) assertSubdivisionFactsChanged(cousub, ucousub Facts, maleDelta, femaleDelta int64) {
+func (s *StatsTestSuite) assertSubdivisionFactsChanged(cousubfp string, cousub, ucousub Facts, maleDelta, femaleDelta int64) {
 	s.Equal(cousub.Pop+(maleDelta+femaleDelta), ucousub.Pop, fmt.Sprintf("Subdivision population should change by %d", maleDelta+femaleDelta))
 	s.Equal(cousub.PopMale+maleDelta, ucousub.PopMale, fmt.Sprintf("Subdivision male population should change by %d", maleDelta))
 	s.Equal(cousub.PopFemale+femaleDelta, ucousub.PopFemale, fmt.Sprintf("Subivision female population should change by %d", femaleDelta))
+
+	// recompute rate for comparison, using total subdivision population
+	var newRate float64
+	cousubPop, _ := s.getSubdivisionPopulation(cousubfp)
+	if cousubPop > 0 {
+		newRate = float64(cousub.Pop+maleDelta+femaleDelta) / float64(cousubPop)
+	} else {
+		newRate = 0
+	}
+	s.Equal(newRate, ucousub.Rate, fmt.Sprintf("County disease rate %.3f should have updated to %.3f", ucousub.Rate, newRate))
+}
+
+// resetStats resets the statistics in the Postgres database before or after a test
+func (s *StatsTestSuite) resetStats() (err error) {
+	_, err = s.db.Query("UPDATE synth_ma.synth_county_stats SET pop = 0, pop_male = 0, pop_female = 0, pop_sm = 0;")
+	if err != nil {
+		return
+	}
+	_, err = s.db.Query("UPDATE synth_ma.synth_cousub_stats SET pop = 0, pop_male = 0, pop_female = 0, pop_sm = 0;")
+	if err != nil {
+		return
+	}
+	_, err = s.db.Query("UPDATE synth_ma.synth_county_facts SET pop = 0, pop_male = 0, pop_female = 0, rate = 0;")
+	if err != nil {
+		return
+	}
+	_, err = s.db.Query("UPDATE synth_ma.synth_cousub_facts SET pop = 0, pop_male = 0, pop_female = 0, rate = 0;")
+	return
 }
 
 func createPatient(city, gender string) *models.Patient {
