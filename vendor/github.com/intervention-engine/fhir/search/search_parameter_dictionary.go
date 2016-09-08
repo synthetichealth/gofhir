@@ -11670,7 +11670,6 @@ var SearchParameterDictionary = map[string]map[string]SearchParamInfo{
 			Type:     "token",
 			Paths: []SearchParamPath{
 				SearchParamPath{Path: "[]identifier", Type: "Identifier"},
-				SearchParamPath{Path: "[]role.[]identifier", Type: "Identifier"},
 			},
 		},
 		"location": SearchParamInfo{

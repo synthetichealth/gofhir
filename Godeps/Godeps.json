@@ -61,23 +61,23 @@
 		},
 		{
 			"ImportPath": "github.com/intervention-engine/fhir/auth",
-			"Comment": "DSTU1-273-g80fff82",
-			"Rev": "80fff82473d1e162ee71237fe8e1579f7b8cde87"
+			"Comment": "DSTU1-274-g390b182",
+			"Rev": "390b182aa9c21656be5284c5688aa9abef28778a"
 		},
 		{
 			"ImportPath": "github.com/intervention-engine/fhir/models",
-			"Comment": "DSTU1-273-g80fff82",
-			"Rev": "80fff82473d1e162ee71237fe8e1579f7b8cde87"
+			"Comment": "DSTU1-274-g390b182",
+			"Rev": "390b182aa9c21656be5284c5688aa9abef28778a"
 		},
 		{
 			"ImportPath": "github.com/intervention-engine/fhir/search",
-			"Comment": "DSTU1-273-g80fff82",
-			"Rev": "80fff82473d1e162ee71237fe8e1579f7b8cde87"
+			"Comment": "DSTU1-274-g390b182",
+			"Rev": "390b182aa9c21656be5284c5688aa9abef28778a"
 		},
 		{
 			"ImportPath": "github.com/intervention-engine/fhir/server",
-			"Comment": "DSTU1-273-g80fff82",
-			"Rev": "80fff82473d1e162ee71237fe8e1579f7b8cde87"
+			"Comment": "DSTU1-274-g390b182",
+			"Rev": "390b182aa9c21656be5284c5688aa9abef28778a"
 		},
 		{
 			"ImportPath": "github.com/itsjamie/gin-cors",
@@ -157,6 +157,10 @@
 			"ImportPath": "gopkg.in/square/go-jose.v1/json",
 			"Comment": "v1.0.3",
 			"Rev": "a3927f83df1b1516f9e9dec71839c93e6bcf1db0"
+		},
+		{
+			"ImportPath": "gopkg.in/yaml.v2",
+			"Rev": "e4d366fc3c7938e2958e662b4258c7a89e1f0e3e"
 		}
 	]
 }
