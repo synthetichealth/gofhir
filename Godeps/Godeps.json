@@ -1,8 +1,27 @@
 {
 	"ImportPath": "github.com/synthetichealth/gofhir",
-	"GoVersion": "go1.6",
+	"GoVersion": "go1.7",
 	"GodepVersion": "v74",
 	"Deps": [
+		{
+			"ImportPath": "github.com/boj/redistore",
+			"Comment": "v1.2",
+			"Rev": "fc113767cd6b051980f260d6dbe84b2740c46ab0"
+		},
+		{
+			"ImportPath": "github.com/garyburd/redigo/internal",
+			"Comment": "v1.0.0-5-gffa8d46",
+			"Rev": "ffa8d46ada782d81cfda81a0fbd9f45ceae448e8"
+		},
+		{
+			"ImportPath": "github.com/garyburd/redigo/redis",
+			"Comment": "v1.0.0-5-gffa8d46",
+			"Rev": "ffa8d46ada782d81cfda81a0fbd9f45ceae448e8"
+		},
+		{
+			"ImportPath": "github.com/gin-gonic/contrib/sessions",
+			"Rev": "547e518040cfb96576b507d2f26779ab9c6fc829"
+		},
 		{
 			"ImportPath": "github.com/gin-gonic/gin",
 			"Comment": "v1.0rc1-248-g4a6bc4a",
@@ -23,24 +42,51 @@
 			"Rev": "8d92cf5fc15a4382f8964b08e1f42a75c0591aa3"
 		},
 		{
+			"ImportPath": "github.com/gorilla/context",
+			"Comment": "v1.1-7-g08b5f42",
+			"Rev": "08b5f424b9271eedf6f9f0ce86cb9396ed337a42"
+		},
+		{
+			"ImportPath": "github.com/gorilla/securecookie",
+			"Comment": "v1.1-4-gc13558c",
+			"Rev": "c13558c2b1c44da35e0eb043053609a5ba3a1f19"
+		},
+		{
+			"ImportPath": "github.com/gorilla/sessions",
+			"Rev": "478cbfc73df023ca675fe89ea13a72b026fcced6"
+		},
+		{
+			"ImportPath": "github.com/icrowley/fake",
+			"Rev": "84bff6d01560fb0b5a396ba29534e93fd00d09c6"
+		},
+		{
+			"ImportPath": "github.com/intervention-engine/fhir/auth",
+			"Comment": "DSTU1-273-g80fff82",
+			"Rev": "80fff82473d1e162ee71237fe8e1579f7b8cde87"
+		},
+		{
 			"ImportPath": "github.com/intervention-engine/fhir/models",
-			"Comment": "DSTU1-211-g3693452",
-			"Rev": "369345261771d2d1191300d178dabd75c2158794"
+			"Comment": "DSTU1-273-g80fff82",
+			"Rev": "80fff82473d1e162ee71237fe8e1579f7b8cde87"
 		},
 		{
 			"ImportPath": "github.com/intervention-engine/fhir/search",
-			"Comment": "DSTU1-211-g3693452",
-			"Rev": "369345261771d2d1191300d178dabd75c2158794"
+			"Comment": "DSTU1-273-g80fff82",
+			"Rev": "80fff82473d1e162ee71237fe8e1579f7b8cde87"
 		},
 		{
 			"ImportPath": "github.com/intervention-engine/fhir/server",
-			"Comment": "DSTU1-211-g3693452",
-			"Rev": "369345261771d2d1191300d178dabd75c2158794"
+			"Comment": "DSTU1-273-g80fff82",
+			"Rev": "80fff82473d1e162ee71237fe8e1579f7b8cde87"
 		},
 		{
 			"ImportPath": "github.com/itsjamie/gin-cors",
 			"Comment": "1.0.0",
 			"Rev": "97b4a9da79331dfa2b6d35f4cdd1e50f5148859c"
+		},
+		{
+			"ImportPath": "github.com/juju/errors",
+			"Rev": "6f54ff6318409d31ff16261533ce2c8381a4fd5d"
 		},
 		{
 			"ImportPath": "github.com/lib/pq",
@@ -57,8 +103,20 @@
 			"Rev": "ee05b128a739a0fb76c7ebd3ae4810c1de808d6d"
 		},
 		{
+			"ImportPath": "github.com/mitre/heart",
+			"Rev": "0c46b433a490476c34ce33205e87a72c8e0bc7ef"
+		},
+		{
 			"ImportPath": "golang.org/x/net/context",
 			"Rev": "5df5483e0518a11a6ef1e894c70236eb3f639557"
+		},
+		{
+			"ImportPath": "golang.org/x/oauth2",
+			"Rev": "4d549c893be7d4011bab739cc585d091a7188d27"
+		},
+		{
+			"ImportPath": "golang.org/x/oauth2/internal",
+			"Rev": "4d549c893be7d4011bab739cc585d091a7188d27"
 		},
 		{
 			"ImportPath": "gopkg.in/go-playground/validator.v8",
@@ -84,6 +142,21 @@
 			"ImportPath": "gopkg.in/mgo.v2/internal/scram",
 			"Comment": "r2015.12.06-2-g03c9f3e",
 			"Rev": "03c9f3ee4c14c8e51ee521a6a7d0425658dd6f64"
+		},
+		{
+			"ImportPath": "gopkg.in/square/go-jose.v1",
+			"Comment": "v1.0.3",
+			"Rev": "a3927f83df1b1516f9e9dec71839c93e6bcf1db0"
+		},
+		{
+			"ImportPath": "gopkg.in/square/go-jose.v1/cipher",
+			"Comment": "v1.0.3",
+			"Rev": "a3927f83df1b1516f9e9dec71839c93e6bcf1db0"
+		},
+		{
+			"ImportPath": "gopkg.in/square/go-jose.v1/json",
+			"Comment": "v1.0.3",
+			"Rev": "a3927f83df1b1516f9e9dec71839c93e6bcf1db0"
 		}
 	]
 }

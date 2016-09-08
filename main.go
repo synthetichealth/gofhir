@@ -5,6 +5,7 @@ import (
 	"flag"
 	"log"
 
+	"github.com/intervention-engine/fhir/auth"
 	"github.com/intervention-engine/fhir/server"
 	_ "github.com/lib/pq"
 	"github.com/synthetichealth/gofhir/stats"
@@ -13,29 +14,36 @@ import (
 
 func main() {
 	// set up the commandline flags (-mongo and -pgurl)
+	reqLog := flag.Bool("reqlog", false, "Enables request logging -- do NOT use in production")
 	mongoHost := flag.String("mongohost", "localhost", "the hostname of the mongo database")
-	pgURL := flag.String("pgurl", "", "The PG connection URL (e.g., postgres://pqgotest:password@localhost/pqgotest?sslmode=verify-full)")
+	pgURL := flag.String("pgurl", "", "The PG connection URL (e.g., postgres://fhir:fhir@localhost/fhir?sslmode=disable)")
+
 	flag.Parse()
+
+	// setup the server
+	s := server.NewServer(*mongoHost)
+
+	if *reqLog {
+		s.Engine.Use(server.RequestLoggerHandler)
+	}
 
 	if *pgURL == "" {
 		log.Fatal("You must supply a pgurl flag value")
 	}
 
-	// configure the GORM Postgres driver and database connection
+	// configure the Postgres driver and database connection
 	db, err := sql.Open("postgres", *pgURL)
 
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer db.Close()
+
 	// ping the db to ensure we connected successfully
 	if err := db.Ping(); err != nil {
 		log.Fatal(err)
 	}
 	da := stats.NewPgStatsDataAccess(db)
-
-	// setup and run the server
-	s := server.NewServer(*mongoHost)
 
 	// Register patient interceptors
 	s.AddInterceptor("Create", "Patient", stats.NewPatientStatsCreateInterceptor(da))
@@ -55,8 +63,6 @@ func main() {
 	s.AddInterceptor("Update", "Condition", stats.NewConditionStatsUpdateInterceptor(da, mda))
 	s.AddInterceptor("Delete", "Condition", stats.NewConditionStatsDeleteInterceptor(da, mda))
 
-	s.Run(server.Config{
-		UseSmartAuth:         false,
-		UseLoggingMiddleware: false,
-	})
+	config := server.Config{Auth: auth.None()}
+	s.Run(config)
 }
