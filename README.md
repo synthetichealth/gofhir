@@ -1,10 +1,10 @@
-FHIR Server w/ Interceptor
-===================================================================================================================================================================
+GoFHIR Server with Extensions for Synthetic Mass
+================================================
 
-This project builds on the [Go-based FHIR server](https://github.com/intervention-engine/ie) by providing data-layer interceptors to track patient statistics. These statistics are stored in a Postgres database.
+This project builds on the [Go-based FHIR server](https://github.com/intervention-engine/ie) by providing data-layer interceptors to track patient statistics. These statistics are stored in a Postgres database and used by the Synthetic Mass UI.
 
-Building and Running the Server Locally
----------------------------------
+Building the Server Locally
+---------------------------
 
 This project works standalone -- in that although it is built on the Go-based FHIR server, that server is already embedded in this project.
 
@@ -33,6 +33,10 @@ $ go build
 ```
 
 The above commands do not need to be run again unless you make (or download) changes to the *gofhir* source code.
+
+
+Running the Server Locally
+--------------------------
 
 For development and testing you should setup a local Postgres database. Follow these [Setup Development Database](https://github.com/synthetichealth/gofhir/blob/ptstats/postgres/postgres-setup.md#setup-development-database) instructions.
 
