@@ -43,10 +43,25 @@ For development and testing you should setup a local Postgres database. Follow t
 Once the executable is built, you can run it with the `-pgurl` argument:
 
 ```
-$ ./gofhir -pgurl postgres://fhir_test:fhir_test@localhost/fhir_test?sslmode=disable
+$ ./gofhir -pgurl postgres://fhir:fhir@localhost/fhir?sslmode=disable
 ```
 
 The *gofhir* server accepts connections on port 3001 by default.
+
+Running the Server in Production
+--------------------------------
+In production you should make sure the following are set:
+
+### Gin Mode
+
+```
+export GIN_MODE=release
+```
+This silences the debug logging.
+
+### Server URL
+
+Run GoFHIR with the `-server` flag to indicate the full URL for the root of the server. This is especially important when running GoFHIR behind a proxy; GoFHIR depends on the `ServerURL` configuration to build the correct pagination URLs when returning resource bundles.
 
 License
 -------
