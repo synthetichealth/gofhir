@@ -2,10 +2,8 @@ package main
 
 import (
 	"flag"
-	"log"
 
 	"github.com/intervention-engine/fhir/server"
-	_ "github.com/lib/pq"
 )
 
 func main() {
@@ -15,7 +13,6 @@ func main() {
 	dbName := flag.String("dbname", "fhir", "Mongo database name")
 	idxConfigPath := flag.String("idxconfig", "config/indexes.conf", "Path to the indexes config file")
 	mongoHost := flag.String("mongohost", "localhost", "the hostname of the mongo database")
-	pgURL := flag.String("pgurl", "", "The PG connection URL (e.g., postgres://fhir:fhir@localhost/fhir?sslmode=disable)")
 
 	flag.Parse()
 
@@ -38,10 +35,6 @@ func main() {
 
 	if *reqLog {
 		s.Engine.Use(server.RequestLoggerHandler)
-	}
-
-	if *pgURL == "" {
-		log.Fatal("You must supply a pgurl flag value")
 	}
 
 	s.Run(config)
