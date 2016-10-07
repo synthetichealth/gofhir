@@ -27,7 +27,7 @@ type ConditionCodeParam struct {
 var ConditionCodeParamInfo = search.SearchParamInfo{
 	Resource: "Patient",
 	Name:     "condition-code",
-	Type:     "condition_code",
+	Type:     "synthma.patient_condition_code",
 }
 
 // ConditionCodeParamParser parses the parameter and returns a ConditionCodeParam.
@@ -46,14 +46,18 @@ var ConditionCodeBSONBuilder = func(param search.SearchParam, searcher *search.M
 	}
 
 	// First get a list of patient IDs for this condition
-	var conditions []models.Condition
-	if err := searcher.GetDB().C("conditions").Find(bson.M{"code.coding.code": cc.Code}).All(&conditions); err != nil {
+	var subjectWrappers []struct {
+		Subject *models.Reference `bson:"subject,omitempty"`
+	}
+	if err := searcher.GetDB().C("conditions").Find(bson.M{"code.coding.code": cc.Code}).Select(bson.M{"_id": 0, "subject": 1}).All(&subjectWrappers); err != nil {
 		return nil, err
 	}
 
 	patientIds := []string{}
-	for _, cond := range conditions {
-		patientIds = append(patientIds, cond.Subject.ReferencedID)
+	for _, wrapper := range subjectWrappers {
+		if wrapper.Subject.Type == "Patient" {
+			patientIds = append(patientIds, wrapper.Subject.ReferencedID)
+		}
 	}
 
 	// Return a BSON object (for Patient) indicating the set of Patient IDs that should be used
