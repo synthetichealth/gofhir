@@ -1,0 +1,18 @@
+sudo: false
+language: go
+go:
+- 1.7
+script: go test ./...
+services:
+- mongodb
+addons:
+  apt:
+    sources:
+    - mongodb-3.2-precise
+    packages:
+    - mongodb-org-server
+branches:
+  only:
+  - master
+notifications:
+  slack: hdi10x:tgmWL6OKKgODjOMqHuRMerxC
