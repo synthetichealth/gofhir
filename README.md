@@ -1,5 +1,5 @@
-GoFHIR Server with Extensions for Synthetic Mass
-================================================
+Synthetic Mass GoFHIR Server [![Build Status](https://travis-ci.org/synthetichealth/gofhir.svg?branch=master)](https://travis-ci.org/synthetichealth/gofhir)
+============================
 
 This project builds on the [Go-based FHIR server](https://github.com/intervention-engine/ie) by providing data-layer interceptors to track patient statistics. These statistics are stored in a Postgres database and used by the Synthetic Mass UI.
 

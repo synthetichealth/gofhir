@@ -2,7 +2,7 @@ sudo: false
 language: go
 go:
 - 1.7
-script: go test ./...
+script: go test $(go list ./... | grep -v /vendor/)
 services:
 - mongodb
 addons:
