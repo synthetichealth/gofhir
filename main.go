@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/intervention-engine/fhir/server"
+	_ "github.com/synthetichealth/gofhir/synthma"
 )
 
 func main() {

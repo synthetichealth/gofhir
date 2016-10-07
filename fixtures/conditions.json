@@ -1,0 +1,66 @@
+[
+    {
+        "resourceType":"Condition",
+        "code":{
+            "coding":[
+                {
+                    "system":"http://snomed.info/sct",
+                    "code":"62106007",
+                    "display":"Concussion with no loss of consciousness"
+                }
+            ]
+        },
+        "subject":{
+            "reference":"Patient/57ec3d291445d4449de25da2"
+        },
+        "onsetDateTime":"1968-08-29T10:35:19-04:00"
+    },
+    {
+        "resourceType":"Condition",
+        "code":{
+            "coding":[
+                {
+                    "system":"http://snomed.info/sct",
+                    "code":"62106007",
+                    "display":"Concussion with no loss of consciousness"
+                }
+            ]
+        },
+        "subject":{
+            "reference":"Patient/57ed3d291445d4449de25da2"
+        },
+        "onsetDateTime":"1974-01-28T10:35:02-04:00"
+    },
+    {
+        "resourceType":"Condition",
+        "code":{
+            "coding":[
+                {
+                    "system":"http://snomed.info/sct",
+                    "code":"62106007",
+                    "display":"Concussion with no loss of consciousness"
+                }
+            ]
+        },
+        "subject":{
+            "reference":"Patient/57ef3d291445d4449de25da2"
+        },
+        "onsetDateTime":"1974-10-28T10:35:02-05:00"
+    },
+    {
+        "resourceType":"Condition",
+        "code":{
+            "coding":[
+                {
+                    "system":"http://snomed.info/sct",
+                    "code":"44465007",
+                    "display":"Sprain of ankle"
+                }
+            ]
+        },
+        "subject":{
+            "reference":"Patient/57eg3d291445d4449de25da2"
+        },
+        "onsetDateTime":"1975-01-01T10:33:42-05:00"
+    }
+]
