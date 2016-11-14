@@ -14,10 +14,8 @@ For information on installing and running only the FHIR server, please begin by 
 -	(Prerequisite) [Install Go](https://github.com/intervention-engine/ie/blob/master/docs/dev_install.md#install-go)
 -	(Prerequisite) [Install MongoDB](https://github.com/intervention-engine/ie/blob/master/docs/dev_install.md#install-mongodb)
 -	(Prerequisite) [Run MongoDB](https://github.com/intervention-engine/ie/blob/master/docs/dev_install.md#run-mongodb)
--  (Prerequisite) [Install Postgres and Extensions](https://github.com/synthetichealth/gofhir/blob/master/docs/postgres-setup.md#install-postgres)
--  (Prerequisite) [Run Postgres](https://github.com/synthetichealth/gofhir/blob/master/docs/postgres-setup.md#run-postgres)
 
-Following standard Go practices, you should clone the *fhir* repository under your `$GOPATH` src folder, using a package-based sub-path:
+Following standard Go practices, you should clone the *gofhir* repository under your `$GOPATH` src folder, using a package-based sub-path:
 
 ```
 $ mkdir -p $GOPATH/src/github.com/synthetichealth
@@ -38,12 +36,8 @@ The above commands do not need to be run again unless you make (or download) cha
 Running the Server Locally
 --------------------------
 
-For development and testing you should setup a local Postgres database. Follow these [Setup Development Database](https://github.com/synthetichealth/gofhir/blob/ptstats/postgres/postgres-setup.md#setup-development-database) instructions.
-
-Once the executable is built, you can run it with the `-pgurl` argument:
-
 ```
-$ ./gofhir -pgurl postgres://fhir:fhir@localhost/fhir?sslmode=disable
+$ ./gofhir
 ```
 
 The *gofhir* server accepts connections on port 3001 by default.
