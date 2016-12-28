@@ -2,6 +2,10 @@ package main
 
 import (
 	"flag"
+	"log"
+	"os"
+
+	mgo "gopkg.in/mgo.v2"
 
 	"github.com/gin-gonic/gin"
 	"github.com/intervention-engine/fhir/server"
@@ -16,6 +20,7 @@ func main() {
 	idxConfigPath := flag.String("idxconfig", "config/indexes.conf", "Path to the indexes config file")
 	mongoHost := flag.String("mongohost", "localhost", "the hostname of the mongo database")
 	readOnly := flag.Bool("readonly", false, "Run the API in read-only mode (no creates, updates, or deletes allowed)")
+	debug := flag.Bool("debug", false, "Enables debug output for the mgo driver")
 
 	flag.Parse()
 
@@ -42,6 +47,13 @@ func main() {
 
 	if *readOnly {
 		s.Engine.Use(ReadOnlyHandler)
+	}
+
+	if *debug {
+		mgo.SetDebug(true)
+		var aLogger *log.Logger
+		aLogger = log.New(os.Stderr, "", log.LstdFlags)
+		mgo.SetLogger(aLogger)
 	}
 
 	s.Run(config)
