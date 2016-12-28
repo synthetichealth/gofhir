@@ -1,7 +1,7 @@
 Synthetic Mass GoFHIR Server [![Build Status](https://travis-ci.org/synthetichealth/gofhir.svg?branch=master)](https://travis-ci.org/synthetichealth/gofhir)
 ============================
 
-This project builds on the [Go-based FHIR server](https://github.com/intervention-engine/ie) by providing data-layer interceptors to track patient statistics. These statistics are stored in a Postgres database and used by the Synthetic Mass UI.
+This project builds on the [Go-based FHIR server](https://github.com/intervention-engine/fhir) by providing data-layer interceptors to track patient statistics. These statistics are stored in a Postgres database and used by the Synthetic Mass UI. Additional, custom indexes are also added over the base indexes that come with the FHIR server. The FHIR server supports FHIR STU3 1.6 (Baltimore), dated August 2016.
 
 Building the Server Locally
 ---------------------------
@@ -32,15 +32,46 @@ $ go build
 
 The above commands do not need to be run again unless you make (or download) changes to the *gofhir* source code.
 
+Options
+-------
+To get a list of options, run:
+
+```
+$ ./gofhir --help
+```
+
+Currently, the GoFHIR server supports the following options:
+
+```
+Usage of ./gofhir:
+  -dbname string
+    	Mongo database name (default "fhir")
+  -debug
+    	Enables debug output for the mgo driver
+  -httptest.serve string
+    	if non-empty, httptest.NewServer serves on this address and blocks
+  -idxconfig string
+    	Path to the indexes config file (default "config/indexes.conf")
+  -mongohost string
+    	the hostname of the mongo database (default "localhost")
+  -readonly
+    	Run the API in read-only mode (no creates, updates, or deletes allowed)
+  -reqlog
+    	Enables request logging -- do NOT use in production
+  -server string
+    	The full URL for the root of the server
+```
 
 Running the Server Locally
 --------------------------
 
+You will need mongodb 3.2 or later running locally. To start the server locally run:
+
 ```
-$ ./gofhir
+$ ./gofhir [OPTIONS]
 ```
 
-The *gofhir* server accepts connections on port 3001 by default.
+Most of the default options should work out-of-the-box in a local development environment. The GoFHIR server accepts connections on port 3001 by default.
 
 Running the Server in Production
 --------------------------------
@@ -51,7 +82,11 @@ In production you should make sure the following are set:
 ```
 export GIN_MODE=release
 ```
-This silences the debug logging.
+This silences Gin's debug logging.
+
+### Server Options
+
+**Do not use the `-debug` or `-reqlog` flags in production.**
 
 ### Server URL
 
