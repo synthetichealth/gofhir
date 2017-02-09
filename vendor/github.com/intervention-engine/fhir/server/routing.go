@@ -94,10 +94,9 @@ func RegisterRoutes(e *gin.Engine, config map[string][]gin.HandlerFunc, dal Data
 	e.POST("/", batchHandlers...)
 
 	// Conformance Statement
-	e.StaticFile("metadata", "conformance/conformance_statement.json")
+	e.StaticFile("metadata", "conformance/capability_statement.json")
 
 	// Resources
-
 	RegisterController("Account", e, config["Account"], dal, serverConfig)
 	RegisterController("ActivityDefinition", e, config["ActivityDefinition"], dal, serverConfig)
 	RegisterController("AllergyIntolerance", e, config["AllergyIntolerance"], dal, serverConfig)
@@ -108,6 +107,7 @@ func RegisterRoutes(e *gin.Engine, config map[string][]gin.HandlerFunc, dal Data
 	RegisterController("Binary", e, config["Binary"], dal, serverConfig)
 	RegisterController("BodySite", e, config["BodySite"], dal, serverConfig)
 	RegisterController("Bundle", e, config["Bundle"], dal, serverConfig)
+	RegisterController("CapabilityStatement", e, config["CapabilityStatement"], dal, serverConfig)
 	RegisterController("CarePlan", e, config["CarePlan"], dal, serverConfig)
 	RegisterController("CareTeam", e, config["CareTeam"], dal, serverConfig)
 	RegisterController("Claim", e, config["Claim"], dal, serverConfig)
@@ -120,12 +120,10 @@ func RegisterRoutes(e *gin.Engine, config map[string][]gin.HandlerFunc, dal Data
 	RegisterController("Composition", e, config["Composition"], dal, serverConfig)
 	RegisterController("ConceptMap", e, config["ConceptMap"], dal, serverConfig)
 	RegisterController("Condition", e, config["Condition"], dal, serverConfig)
-	RegisterController("Conformance", e, config["Conformance"], dal, serverConfig)
 	RegisterController("Consent", e, config["Consent"], dal, serverConfig)
 	RegisterController("Contract", e, config["Contract"], dal, serverConfig)
 	RegisterController("Coverage", e, config["Coverage"], dal, serverConfig)
 	RegisterController("DataElement", e, config["DataElement"], dal, serverConfig)
-	RegisterController("DecisionSupportServiceModule", e, config["DecisionSupportServiceModule"], dal, serverConfig)
 	RegisterController("DetectedIssue", e, config["DetectedIssue"], dal, serverConfig)
 	RegisterController("Device", e, config["Device"], dal, serverConfig)
 	RegisterController("DeviceComponent", e, config["DeviceComponent"], dal, serverConfig)
@@ -166,8 +164,9 @@ func RegisterRoutes(e *gin.Engine, config map[string][]gin.HandlerFunc, dal Data
 	RegisterController("Medication", e, config["Medication"], dal, serverConfig)
 	RegisterController("MedicationAdministration", e, config["MedicationAdministration"], dal, serverConfig)
 	RegisterController("MedicationDispense", e, config["MedicationDispense"], dal, serverConfig)
-	RegisterController("MedicationOrder", e, config["MedicationOrder"], dal, serverConfig)
+	RegisterController("MedicationRequest", e, config["MedicationRequest"], dal, serverConfig)
 	RegisterController("MedicationStatement", e, config["MedicationStatement"], dal, serverConfig)
+	RegisterController("MessageDefinition", e, config["MessageDefinition"], dal, serverConfig)
 	RegisterController("MessageHeader", e, config["MessageHeader"], dal, serverConfig)
 	RegisterController("NamingSystem", e, config["NamingSystem"], dal, serverConfig)
 	RegisterController("NutritionRequest", e, config["NutritionRequest"], dal, serverConfig)
@@ -191,10 +190,14 @@ func RegisterRoutes(e *gin.Engine, config map[string][]gin.HandlerFunc, dal Data
 	RegisterController("QuestionnaireResponse", e, config["QuestionnaireResponse"], dal, serverConfig)
 	RegisterController("ReferralRequest", e, config["ReferralRequest"], dal, serverConfig)
 	RegisterController("RelatedPerson", e, config["RelatedPerson"], dal, serverConfig)
+	RegisterController("RequestGroup", e, config["RequestGroup"], dal, serverConfig)
+	RegisterController("ResearchStudy", e, config["ResearchStudy"], dal, serverConfig)
+	RegisterController("ResearchSubject", e, config["ResearchSubject"], dal, serverConfig)
 	RegisterController("RiskAssessment", e, config["RiskAssessment"], dal, serverConfig)
 	RegisterController("Schedule", e, config["Schedule"], dal, serverConfig)
 	RegisterController("SearchParameter", e, config["SearchParameter"], dal, serverConfig)
 	RegisterController("Sequence", e, config["Sequence"], dal, serverConfig)
+	RegisterController("ServiceDefinition", e, config["ServiceDefinition"], dal, serverConfig)
 	RegisterController("Slot", e, config["Slot"], dal, serverConfig)
 	RegisterController("Specimen", e, config["Specimen"], dal, serverConfig)
 	RegisterController("StructureDefinition", e, config["StructureDefinition"], dal, serverConfig)
@@ -204,8 +207,8 @@ func RegisterRoutes(e *gin.Engine, config map[string][]gin.HandlerFunc, dal Data
 	RegisterController("SupplyDelivery", e, config["SupplyDelivery"], dal, serverConfig)
 	RegisterController("SupplyRequest", e, config["SupplyRequest"], dal, serverConfig)
 	RegisterController("Task", e, config["Task"], dal, serverConfig)
+	RegisterController("TestReport", e, config["TestReport"], dal, serverConfig)
 	RegisterController("TestScript", e, config["TestScript"], dal, serverConfig)
 	RegisterController("ValueSet", e, config["ValueSet"], dal, serverConfig)
 	RegisterController("VisionPrescription", e, config["VisionPrescription"], dal, serverConfig)
-
 }
