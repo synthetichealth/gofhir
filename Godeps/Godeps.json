@@ -1,7 +1,7 @@
 {
 	"ImportPath": "github.com/synthetichealth/gofhir",
 	"GoVersion": "go1.7",
-	"GodepVersion": "v74",
+	"GodepVersion": "v79",
 	"Packages": [
 		"./..."
 	],
@@ -74,13 +74,13 @@
 		},
 		{
 			"ImportPath": "github.com/intervention-engine/fhir/models",
-			"Comment": "DSTU1-291-ge0d615b",
-			"Rev": "e0d615b82d41f235122bfc45bdd74dbf560a6738"
+			"Comment": "DSTU1-298-g18eb917",
+			"Rev": "18eb917749630d67a8abda0bf0dd81834423296f"
 		},
 		{
 			"ImportPath": "github.com/intervention-engine/fhir/search",
-			"Comment": "DSTU1-291-ge0d615b",
-			"Rev": "e0d615b82d41f235122bfc45bdd74dbf560a6738"
+			"Comment": "DSTU1-298-g18eb917",
+			"Rev": "18eb917749630d67a8abda0bf0dd81834423296f"
 		},
 		{
 			"ImportPath": "github.com/intervention-engine/fhir/server",
