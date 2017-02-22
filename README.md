@@ -1,7 +1,7 @@
 Synthetic Mass GoFHIR Server [![Build Status](https://travis-ci.org/synthetichealth/gofhir.svg?branch=master)](https://travis-ci.org/synthetichealth/gofhir)
 ============================
 
-This project builds on the [Go-based FHIR server](https://github.com/intervention-engine/fhir) by providing data-layer interceptors to track patient statistics. These statistics are stored in a Postgres database and used by the Synthetic Mass UI. Additional, custom indexes are also added over the base indexes that come with the FHIR server. The FHIR server supports FHIR STU3 1.6 (Baltimore), dated August 2016.
+This project builds on the [Go-based FHIR server](https://github.com/intervention-engine/fhir) by providing data-layer interceptors to track patient statistics. These statistics are stored in a Postgres database and used by the Synthetic Mass UI. Additional, custom indexes are also added over the base indexes that come with the FHIR server. The FHIR server supports FHIR STU3 1.8 (San Antonio), dated January 2017.
 
 Building the Server Locally
 ---------------------------

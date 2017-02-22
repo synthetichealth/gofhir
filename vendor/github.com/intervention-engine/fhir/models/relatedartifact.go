@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2015, HL7, Inc & The MITRE Corporation
+// Copyright (c) 2011-2017, HL7, Inc & The MITRE Corporation
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without modification,
@@ -26,7 +26,7 @@
 
 package models
 
-type RelatedResource struct {
+type RelatedArtifact struct {
 	Type     string      `bson:"type,omitempty" json:"type,omitempty"`
 	Display  string      `bson:"display,omitempty" json:"display,omitempty"`
 	Citation string      `bson:"citation,omitempty" json:"citation,omitempty"`
