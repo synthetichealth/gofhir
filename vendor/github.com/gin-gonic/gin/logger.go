@@ -7,7 +7,10 @@ package gin
 import (
 	"fmt"
 	"io"
+	"os"
 	"time"
+
+	"github.com/mattn/go-isatty"
 )
 
 var (
@@ -28,25 +31,28 @@ func ErrorLogger() HandlerFunc {
 func ErrorLoggerT(typ ErrorType) HandlerFunc {
 	return func(c *Context) {
 		c.Next()
-		// avoid writting if we already wrote into the response body
-		if !c.Writer.Written() {
-			errors := c.Errors.ByType(typ)
-			if len(errors) > 0 {
-				c.JSON(-1, errors)
-			}
+		errors := c.Errors.ByType(typ)
+		if len(errors) > 0 {
+			c.JSON(-1, errors)
 		}
 	}
 }
 
-// Instances a Logger middleware that will write the logs to gin.DefaultWriter
+// Logger instances a Logger middleware that will write the logs to gin.DefaultWriter
 // By default gin.DefaultWriter = os.Stdout
 func Logger() HandlerFunc {
 	return LoggerWithWriter(DefaultWriter)
 }
 
-// Instance a Logger middleware with the specified writter buffer.
+// LoggerWithWriter instance a Logger middleware with the specified writter buffer.
 // Example: os.Stdout, a file opened in write mode, a socket...
 func LoggerWithWriter(out io.Writer, notlogged ...string) HandlerFunc {
+	isTerm := true
+
+	if w, ok := out.(*os.File); !ok || !isatty.IsTerminal(w.Fd()) {
+		isTerm = false
+	}
+
 	var skip map[string]struct{}
 
 	if length := len(notlogged); length > 0 {
@@ -74,8 +80,11 @@ func LoggerWithWriter(out io.Writer, notlogged ...string) HandlerFunc {
 			clientIP := c.ClientIP()
 			method := c.Request.Method
 			statusCode := c.Writer.Status()
-			statusColor := colorForStatus(statusCode)
-			methodColor := colorForMethod(method)
+			var statusColor, methodColor string
+			if isTerm {
+				statusColor = colorForStatus(statusCode)
+				methodColor = colorForMethod(method)
+			}
 			comment := c.Errors.ByType(ErrorTypePrivate).String()
 
 			fmt.Fprintf(out, "[GIN] %v |%s %3d %s| %13v | %s |%s  %s %-7s %s\n%s",

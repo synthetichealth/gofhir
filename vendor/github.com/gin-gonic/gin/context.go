@@ -69,7 +69,7 @@ func (c *Context) reset() {
 // Copy returns a copy of the current context that can be safely used outside the request's scope.
 // This have to be used then the context has to be passed to a goroutine.
 func (c *Context) Copy() *Context {
-	var cp Context = *c
+	var cp = *c
 	cp.writermem.ResponseWriter = nil
 	cp.Writer = &cp.writermem
 	cp.index = abortIndex
@@ -115,6 +115,7 @@ func (c *Context) Abort() {
 // For example, a failed attempt to authentificate a request could use: context.AbortWithStatus(401).
 func (c *Context) AbortWithStatus(code int) {
 	c.Status(code)
+	c.Writer.WriteHeaderNow()
 	c.Abort()
 }
 
@@ -171,7 +172,7 @@ func (c *Context) Get(key string) (value interface{}, exists bool) {
 	return
 }
 
-// Returns the value for the given key if it exists, otherwise it panics.
+// MustGet returns the value for the given key if it exists, otherwise it panics.
 func (c *Context) MustGet(key string) interface{} {
 	if value, exists := c.Get(key); exists {
 		return value
@@ -229,11 +230,27 @@ func (c *Context) DefaultQuery(key, defaultValue string) string {
 // 		("", false) == c.GetQuery("id")
 // 		("", true) == c.GetQuery("lastname")
 func (c *Context) GetQuery(key string) (string, bool) {
-	req := c.Request
-	if values, ok := req.URL.Query()[key]; ok && len(values) > 0 {
-		return values[0], true
+	if values, ok := c.GetQueryArray(key); ok {
+		return values[0], ok
 	}
 	return "", false
+}
+
+// QueryArray returns a slice of strings for a given query key.
+// The length of the slice depends on the number of params with the given key.
+func (c *Context) QueryArray(key string) []string {
+	values, _ := c.GetQueryArray(key)
+	return values
+}
+
+// GetQueryArray returns a slice of strings for a given query key, plus
+// a boolean value whether at least one value exists for the given key.
+func (c *Context) GetQueryArray(key string) ([]string, bool) {
+	req := c.Request
+	if values, ok := req.URL.Query()[key]; ok && len(values) > 0 {
+		return values, true
+	}
+	return []string{}, false
 }
 
 // PostForm returns the specified key from a POST urlencoded form or multipart form
@@ -243,7 +260,7 @@ func (c *Context) PostForm(key string) string {
 	return value
 }
 
-// PostForm returns the specified key from a POST urlencoded form or multipart form
+// DefaultPostForm returns the specified key from a POST urlencoded form or multipart form
 // when it exists, otherwise it returns the specified defaultValue string.
 // See: PostForm() and GetPostForm() for further information.
 func (c *Context) DefaultPostForm(key, defaultValue string) string {
@@ -261,17 +278,34 @@ func (c *Context) DefaultPostForm(key, defaultValue string) string {
 // 		email=  			  	-->  ("", true) := GetPostForm("email") // set email to ""
 //							 	-->  ("", false) := GetPostForm("email") // do nothing with email
 func (c *Context) GetPostForm(key string) (string, bool) {
+	if values, ok := c.GetPostFormArray(key); ok {
+		return values[0], ok
+	}
+	return "", false
+}
+
+// PostFormArray returns a slice of strings for a given form key.
+// The length of the slice depends on the number of params with the given key.
+func (c *Context) PostFormArray(key string) []string {
+	values, _ := c.GetPostFormArray(key)
+	return values
+}
+
+// GetPostFormArray returns a slice of strings for a given form key, plus
+// a boolean value whether at least one value exists for the given key.
+func (c *Context) GetPostFormArray(key string) ([]string, bool) {
 	req := c.Request
+	req.ParseForm()
 	req.ParseMultipartForm(32 << 20) // 32 MB
 	if values := req.PostForm[key]; len(values) > 0 {
-		return values[0], true
+		return values, true
 	}
 	if req.MultipartForm != nil && req.MultipartForm.File != nil {
 		if values := req.MultipartForm.Value[key]; len(values) > 0 {
-			return values[0], true
+			return values, true
 		}
 	}
-	return "", false
+	return []string{}, false
 }
 
 // Bind checks the Content-Type to select a binding engine automatically,
@@ -279,7 +313,7 @@ func (c *Context) GetPostForm(key string) (string, bool) {
 // 		"application/json" --> JSON binding
 // 		"application/xml"  --> XML binding
 // otherwise --> returns an error
-// If Parses the request's body as JSON if Content-Type == "application/json" using JSON or XML  as a JSON input.
+// It parses the request's body as JSON if Content-Type == "application/json" using JSON or XML as a JSON input.
 // It decodes the json payload into the struct specified as a pointer.
 // Like ParseBody() but this method also writes a 400 error if the json is not valid.
 func (c *Context) Bind(obj interface{}) error {
@@ -424,6 +458,11 @@ func (c *Context) JSON(code int, obj interface{}) {
 // It also sets the Content-Type as "application/xml".
 func (c *Context) XML(code int, obj interface{}) {
 	c.Render(code, render.XML{Data: obj})
+}
+
+// YAML serializes the given struct as YAML into the response body.
+func (c *Context) YAML(code int, obj interface{}) {
+	c.Render(code, render.YAML{Data: obj})
 }
 
 // String writes the given string into the response body.

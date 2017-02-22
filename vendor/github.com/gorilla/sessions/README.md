@@ -52,6 +52,12 @@ with
 as or else you will leak memory! An easy way to do this is to wrap the top-level
 mux when calling http.ListenAndServe:
 
+```go
+	http.ListenAndServe(":8080", context.ClearHandler(http.DefaultServeMux))
+```
+
+The ClearHandler function is provided by the gorilla/context package.
+
 More examples are available [on the Gorilla
 website](http://www.gorillatoolkit.org/pkg/sessions).
 
@@ -64,15 +70,17 @@ Other implementations of the `sessions.Store` interface:
 * [github.com/srinathgs/couchbasestore](https://github.com/srinathgs/couchbasestore) - Couchbase
 * [github.com/denizeren/dynamostore](https://github.com/denizeren/dynamostore) - Dynamodb on AWS
 * [github.com/bradleypeabody/gorilla-sessions-memcache](https://github.com/bradleypeabody/gorilla-sessions-memcache) - Memcache
-* [github.com/dsoprea/goappenginesessioncascade](https://github.com/dsoprea/goappenginesessioncascade) - Memcache/Datastore/Context in AppEngine
+* [github.com/dsoprea/go-appengine-sessioncascade](https://github.com/dsoprea/go-appengine-sessioncascade) - Memcache/Datastore/Context in AppEngine
 * [github.com/kidstuff/mongostore](https://github.com/kidstuff/mongostore) - MongoDB
 * [github.com/srinathgs/mysqlstore](https://github.com/srinathgs/mysqlstore) - MySQL
+* [github.com/EnumApps/clustersqlstore](https://github.com/EnumApps/clustersqlstore) - MySQL Cluster
 * [github.com/antonlindstrom/pgstore](https://github.com/antonlindstrom/pgstore) - PostgreSQL
 * [github.com/boj/redistore](https://github.com/boj/redistore) - Redis
 * [github.com/boj/rethinkstore](https://github.com/boj/rethinkstore) - RethinkDB
 * [github.com/boj/riakstore](https://github.com/boj/riakstore) - Riak
 * [github.com/michaeljs1990/sqlitestore](https://github.com/michaeljs1990/sqlitestore) - SQLite
 * [github.com/wader/gormstore](https://github.com/wader/gormstore) - GORM (MySQL, PostgreSQL, SQLite)
+* [github.com/gernest/qlstore](https://github.com/gernest/qlstore) - ql
 
 ## License
 
