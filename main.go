@@ -21,6 +21,7 @@ func main() {
 	mongoHost := flag.String("mongohost", "localhost", "the hostname of the mongo database")
 	readOnly := flag.Bool("readonly", false, "Run the API in read-only mode (no creates, updates, or deletes allowed)")
 	debug := flag.Bool("debug", false, "Enables debug output for the mgo driver")
+	disableCISearches := flag.Bool("disable-ci-searches", false, "Disables case-insensitive searches using regexes")
 
 	flag.Parse()
 
@@ -54,6 +55,10 @@ func main() {
 		var aLogger *log.Logger
 		aLogger = log.New(os.Stderr, "", log.LstdFlags)
 		mgo.SetLogger(aLogger)
+	}
+
+	if *disableCISearches {
+		config.EnableCISearches = false
 	}
 
 	s.Run(config)

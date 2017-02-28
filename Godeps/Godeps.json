@@ -70,23 +70,23 @@
 		},
 		{
 			"ImportPath": "github.com/intervention-engine/fhir/auth",
-			"Comment": "DSTU1-298-g18eb917",
-			"Rev": "18eb917749630d67a8abda0bf0dd81834423296f"
+			"Comment": "DSTU1-300-g1a65268",
+			"Rev": "1a652684a720e6b45390442c1786e913561b0468"
 		},
 		{
 			"ImportPath": "github.com/intervention-engine/fhir/models",
-			"Comment": "DSTU1-298-g18eb917",
-			"Rev": "18eb917749630d67a8abda0bf0dd81834423296f"
+			"Comment": "DSTU1-300-g1a65268",
+			"Rev": "1a652684a720e6b45390442c1786e913561b0468"
 		},
 		{
 			"ImportPath": "github.com/intervention-engine/fhir/search",
-			"Comment": "DSTU1-298-g18eb917",
-			"Rev": "18eb917749630d67a8abda0bf0dd81834423296f"
+			"Comment": "DSTU1-300-g1a65268",
+			"Rev": "1a652684a720e6b45390442c1786e913561b0468"
 		},
 		{
 			"ImportPath": "github.com/intervention-engine/fhir/server",
-			"Comment": "DSTU1-298-g18eb917",
-			"Rev": "18eb917749630d67a8abda0bf0dd81834423296f"
+			"Comment": "DSTU1-300-g1a65268",
+			"Rev": "1a652684a720e6b45390442c1786e913561b0468"
 		},
 		{
 			"ImportPath": "github.com/itsjamie/gin-cors",
