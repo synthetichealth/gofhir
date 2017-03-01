@@ -1,0 +1,82 @@
+[
+    {
+        "resourceType": "Patient",
+        "id": "58a4904e97bba945de21eac8",
+        "name": [
+            {
+                "given": ["Lowell"],
+                "family": "Abbott"
+            }
+        ],
+        "gender": "male",
+        "birthDate": "1950-09-02",
+        "extension": [
+            {
+                "url": "http://hl7.org/fhir/StructureDefinition/us-core-race",
+                "valueCodeableConcept": {
+                    "coding": [
+                    {
+                        "system": "http://hl7.org/fhir/v3/Race",
+                        "code": "2106-3",
+                        "display": "White"
+                    }
+                    ],
+                    "text": "race"
+                }
+            },
+            {
+                "url": "http://hl7.org/fhir/StructureDefinition/us-core-ethnicity",
+                "valueCodeableConcept": {
+                    "coding": [
+                    {
+                        "system": "http://hl7.org/fhir/v3/Ethnicity",
+                        "code": "2186-5",
+                        "display": "Nonhispanic"
+                    }
+                    ],
+                    "text": "ethnicity"
+                }
+            }
+        ]
+    },
+    {
+        "resourceType": "Patient",
+        "id": "58a4904e97bba945de21eac9",
+        "name": [
+            {
+                "given": ["Saul"],
+                "family": "French"
+            }
+        ],
+        "gender": "male",
+        "birthDate": "1974-10-06",
+        "extension": [
+            {
+                "url": "http://hl7.org/fhir/StructureDefinition/us-core-race",
+                "valueCodeableConcept": {
+                    "coding": [
+                    {
+                        "system": "http://hl7.org/fhir/v3/Race",
+                        "code": "2054-5",
+                        "display": "Black"
+                    }
+                    ],
+                    "text": "race"
+                }
+            },
+            {
+                "url": "http://hl7.org/fhir/StructureDefinition/us-core-ethnicity",
+                "valueCodeableConcept": {
+                    "coding": [
+                    {
+                        "system": "http://hl7.org/fhir/v3/Ethnicity",
+                        "code": "2186-5",
+                        "display": "Nonhispanic"
+                    }
+                    ],
+                    "text": "ethnicity"
+                }
+            }
+        ]
+    }
+]
