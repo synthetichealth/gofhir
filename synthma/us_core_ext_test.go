@@ -69,7 +69,7 @@ func (suite *USCoreParamsSuite) TestUSCoreRaceBSONBuilder() {
 	require.NoError(err)
 
 	// Run the BSON builder
-	obtained, err := USCoreRaceBSONBuilder(param, search.NewMongoSearcher(server.Database, false))
+	obtained, err := USCoreRaceBSONBuilder(param, search.NewMongoSearcher(server.Database, false, false))
 	require.NoError(err)
 
 	// Check the BSON obtained
@@ -115,7 +115,7 @@ func (suite *USCoreParamsSuite) TestUSCoreEthnicityBSONBuilder() {
 	require.NoError(err)
 
 	// Run the BSON builder
-	obtained, err := USCoreEthnicityBSONBuilder(param, search.NewMongoSearcher(server.Database, false))
+	obtained, err := USCoreEthnicityBSONBuilder(param, search.NewMongoSearcher(server.Database, false, false))
 	require.NoError(err)
 
 	// Check the BSON obtained

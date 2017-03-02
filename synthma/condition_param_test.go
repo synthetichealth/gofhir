@@ -69,7 +69,7 @@ func (suite *ConditionCodeParamSuite) TestConditionCodeBSONBuilder() {
 	require.NoError(err)
 
 	// Run the BSON builder
-	obtained, err := ConditionCodeBSONBuilder(param, search.NewMongoSearcher(server.Database, false))
+	obtained, err := ConditionCodeBSONBuilder(param, search.NewMongoSearcher(server.Database, false, false))
 	require.NoError(err)
 
 	// Check the BSON obtained
