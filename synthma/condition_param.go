@@ -53,17 +53,25 @@ var ConditionCodeBSONBuilder = func(param search.SearchParam, searcher *search.M
 		return nil, err
 	}
 
-	patientIds := []string{}
+	patientIDMap := make(map[string]bool)
 	for _, wrapper := range subjectWrappers {
 		if wrapper.Subject.Type == "Patient" {
-			patientIds = append(patientIds, wrapper.Subject.ReferencedID)
+			patientIDMap[wrapper.Subject.ReferencedID] = true
 		}
+	}
+
+	// convert map of patient IDs to a list
+	patientIDList := make([]string, len(patientIDMap))
+	i := 0
+	for k := range patientIDMap {
+		patientIDList[i] = k
+		i++
 	}
 
 	// Return a BSON object (for Patient) indicating the set of Patient IDs that should be used
 	return bson.M{
 		"_id": bson.M{
-			"$in": patientIds,
+			"$in": patientIDList,
 		},
 	}, nil
 }
