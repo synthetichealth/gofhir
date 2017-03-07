@@ -21,6 +21,7 @@ func main() {
 	mongoHost := flag.String("mongohost", "localhost", "the hostname of the mongo database")
 	readOnly := flag.Bool("readonly", false, "Run the API in read-only mode (no creates, updates, or deletes allowed)")
 	debug := flag.Bool("debug", false, "Enables debug output for the mgo driver")
+	noCountResults := flag.Bool("no-count-results", false, "Stops searches from counting the total results, saving time")
 	disableCISearches := flag.Bool("disable-ci-searches", false, "Disables case-insensitive searches using regexes")
 	dbTimeout := flag.String("db-timeout", "1m", "Database timeout, for example 45s, 1m, 300ms, etc.")
 
@@ -41,6 +42,8 @@ func main() {
 		aLogger = log.New(os.Stderr, "", log.LstdFlags)
 		mgo.SetLogger(aLogger)
 	}
+
+	config.CountTotalResults = !*noCountResults
 
 	config.EnableCISearches = !*disableCISearches
 	duration, err := time.ParseDuration(*dbTimeout)
