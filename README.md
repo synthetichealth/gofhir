@@ -44,22 +44,26 @@ Currently, the GoFHIR server supports the following options:
 
 ```
 Usage of ./gofhir:
+  -db-timeout string
+    	Database timeout, for example 45s, 1m, 300ms, etc. (default "1m")
   -dbname string
     	Mongo database name (default "fhir")
   -debug
     	Enables debug output for the mgo driver
-  -httptest.serve string
-    	if non-empty, httptest.NewServer serves on this address and blocks
+  -disable-ci-searches
+    	Disables case-insensitive searches using regexes
   -idxconfig string
     	Path to the indexes config file (default "config/indexes.conf")
   -mongohost string
     	the hostname of the mongo database (default "localhost")
+  -no-count-results
+    	Stops searches from counting the total results, saving time
   -readonly
     	Run the API in read-only mode (no creates, updates, or deletes allowed)
   -reqlog
     	Enables request logging -- do NOT use in production
   -server string
-    	The full URL for the root of the server
+    	The full URL for the root of the server (default "localhost:3001")
 ```
 
 Running the Server Locally
