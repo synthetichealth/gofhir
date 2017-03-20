@@ -13,17 +13,20 @@ import (
 )
 
 func main() {
-	// set up the commandline flags (-mongo and -pgurl)
+	// server options
 	reqLog := flag.Bool("reqlog", false, "Enables request logging -- do NOT use in production")
 	serverURL := flag.String("server", "localhost:3001", "The full URL for the root of the server")
-	dbName := flag.String("dbname", "fhir", "Mongo database name")
 	idxConfigPath := flag.String("idxconfig", "config/indexes.conf", "Path to the indexes config file")
-	mongoHost := flag.String("mongohost", "localhost", "the hostname of the mongo database")
 	readOnly := flag.Bool("readonly", false, "Run the API in read-only mode (no creates, updates, or deletes allowed)")
-	debug := flag.Bool("debug", false, "Enables debug output for the mgo driver")
-	noCountResults := flag.Bool("no-count-results", false, "Stops searches from counting the total results, saving time")
-	disableCISearches := flag.Bool("disable-ci-searches", false, "Disables case-insensitive searches using regexes")
-	dbTimeout := flag.String("db-timeout", "1m", "Database timeout, for example 45s, 1m, 300ms, etc.")
+	debug := flag.Bool("debug", false, "Enables debug level logging")
+
+	// database options
+	mongoHost := flag.String("db.host", "localhost", "the hostname of the mongo database")
+	dbName := flag.String("db.name", "fhir", "Mongo database name")
+	noCountResults := flag.Bool("db.no-count-results", false, "Stops searches from counting the total results, saving time")
+	disableCISearches := flag.Bool("db.disable-ci-searches", false, "Disables case-insensitive searches using regexes")
+	dbSocketTimeout := flag.String("db.socket-timeout", "1m", "Database socket timeout, for example 45s, 1m, 300ms, etc.")
+	dbOpTimeout := flag.String("db.op-timeout", "1m", "Database opereation timeout, for example 45s, 1m, 300ms, etc.")
 
 	flag.Parse()
 
@@ -31,10 +34,12 @@ func main() {
 
 	// If these flags aren't set, the default values are used.
 	config.ServerURL = *serverURL
-	config.DatabaseName = *dbName
 	config.IndexConfigPath = *idxConfigPath
-	config.DatabaseHost = *mongoHost
 	config.ReadOnly = *readOnly
+	config.DatabaseHost = *mongoHost
+	config.DatabaseName = *dbName
+	config.CountTotalResults = !*noCountResults
+	config.EnableCISearches = !*disableCISearches
 
 	if *debug {
 		mgo.SetDebug(true)
@@ -43,12 +48,14 @@ func main() {
 		mgo.SetLogger(aLogger)
 	}
 
-	config.CountTotalResults = !*noCountResults
-
-	config.EnableCISearches = !*disableCISearches
-	duration, err := time.ParseDuration(*dbTimeout)
+	socketDuration, err := time.ParseDuration(*dbSocketTimeout)
 	if err == nil {
-		config.DatabaseTimeout = duration
+		config.DatabaseSocketTimeout = socketDuration
+	}
+
+	opDuration, err := time.ParseDuration(*dbOpTimeout)
+	if err == nil {
+		config.DatabaseOpTimeout = opDuration
 	}
 
 	// setup the server
