@@ -15,18 +15,18 @@ import (
 func main() {
 	// server options
 	reqLog := flag.Bool("reqlog", false, "Enables request logging -- do NOT use in production")
-	serverURL := flag.String("server", "localhost:3001", "The full URL for the root of the server")
-	idxConfigPath := flag.String("idxconfig", "config/indexes.conf", "Path to the indexes config file")
-	readOnly := flag.Bool("readonly", false, "Run the API in read-only mode (no creates, updates, or deletes allowed)")
-	debug := flag.Bool("debug", false, "Enables debug level logging")
+	serverURL := flag.String("server", server.DefaultConfig.ServerURL, "The full URL for the root of the server")
+	idxConfigPath := flag.String("idxconfig", server.DefaultConfig.IndexConfigPath, "Path to the indexes config file")
+	readOnly := flag.Bool("readonly", server.DefaultConfig.ReadOnly, "Run the API in read-only mode (no creates, updates, or deletes allowed)")
+	debug := flag.Bool("debug", server.DefaultConfig.Debug, "Enables debug level logging")
 
 	// database options
-	mongoHost := flag.String("db.host", "localhost", "the hostname of the mongo database")
-	dbName := flag.String("db.name", "fhir", "Mongo database name")
-	noCountResults := flag.Bool("db.no-count-results", false, "Stops searches from counting the total results, saving time")
-	disableCISearches := flag.Bool("db.disable-ci-searches", false, "Disables case-insensitive searches using regexes")
-	dbSocketTimeout := flag.String("db.socket-timeout", "1m", "Database socket timeout, for example 45s, 1m, 300ms, etc.")
-	dbOpTimeout := flag.String("db.op-timeout", "1m", "Database opereation timeout, for example 45s, 1m, 300ms, etc.")
+	mongoHost := flag.String("db.host", server.DefaultConfig.DatabaseHost, "the hostname of the mongo database")
+	dbName := flag.String("db.name", server.DefaultConfig.DatabaseName, "Mongo database name")
+	noCountResults := flag.Bool("db.no-count-results", !server.DefaultConfig.CountTotalResults, "Stops searches from counting the total results, saving time")
+	disableCISearches := flag.Bool("db.disable-ci-searches", !server.DefaultConfig.EnableCISearches, "Disables case-insensitive searches using regexes")
+	dbSocketTimeout := flag.String("db.socket-timeout", server.DefaultConfig.DatabaseSocketTimeout.String(), "Database socket timeout, for example 45s, 1m, 300ms, etc.")
+	dbOpTimeout := flag.String("db.op-timeout", server.DefaultConfig.DatabaseOpTimeout.String(), "Database opereation timeout, for example 45s, 1m, 300ms, etc.")
 
 	flag.Parse()
 
